@@ -1,6 +1,6 @@
+#include <Arduino.h>
+#include "robot_config.h"
 #include "Encoder.h"
-
-#include "robotconfig.h"
 
 #pragma GCC optimize ("O3")
 
@@ -26,8 +26,8 @@ void updateEncodersState(void)
 
   for (int idx = 0; idx < kNumMot; idx++)
   {
-    if (digitalReadFast(kMotEncPin[idx][0])) b |= (1<<(idx*2));
-    if (digitalReadFast(kMotEncPin[idx][1])) b |= (1<<((2*idx)+(1)));
+    if (digitalRead(kMotEncPinA[idx])) b |= (1 << (idx * 2));
+    if (digitalRead(kMotEncPinB[idx])) b |= (1 << ((idx * 2) + 1));
   }
 
   for (int idx = 0; idx < kNumMot; idx++)
@@ -55,9 +55,9 @@ void Encoder::updateDelta(uint8_t &new_state)
 void Encoder::updateTick(void)
 {
   tick_last = tick;
-  cli();
+  noInterrupts();
   odo = delta;
   delta = 0;
-  sei();
+  interrupts();
   tick += odo;
 }

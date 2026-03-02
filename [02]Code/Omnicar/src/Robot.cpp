@@ -1,7 +1,18 @@
 #include "Robot.h"
 
+// Fix: Define missing constants and flags
+bool PID_enable = true;
+const int kRobotSensSwitchPin = 35; // Default input pin if not defined
 
+// // Fix: Declare external encoder update function (assumed defined in main.cpp)
+// extern void updateEncodersState();
 
+// Fix: ESP32 Hardware Timer handle and ISR
+hw_timer_t * encoder_timer = NULL;
+
+void IRAM_ATTR onEncoderTimer() {
+  updateEncodersState();
+}
 
 
 void Robot::init(void (*serialWriteChannelFunction)(char c, int32_t v))
@@ -13,9 +24,9 @@ void Robot::init(void (*serialWriteChannelFunction)(char c, int32_t v))
 
   // General inputs / outputs
   // - solenoid
-  pinMode(kRobotSensSwitchPin, INPUT_PULLUP);
-  pinMode(kRobotActSolenoidPin, OUTPUT);
-  digitalWrite(kRobotActSolenoidPin, 0);
+  //pinMode(kRobotSensSwitchPin, INPUT_PULLUP);
+  //pinMode(kRobotActSolenoidPin, OUTPUT);
+  //digitalWrite(kRobotActSolenoidPin, 0);
 
   // Encoders
   initEnc();
@@ -26,15 +37,18 @@ void Robot::init(void (*serialWriteChannelFunction)(char c, int32_t v))
     encoders[i].delta = 0;
   }
 
-  Timer1.attachInterrupt(updateEncodersState);
-  Timer1.initialize(5);  // calls every X us
+  // Fix: Replace Timer1 with ESP32 Hardware Timer
+  // Timer 0, prescaler 80 (1MHz clock), count up
+  encoder_timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(encoder_timer, &updateEncodersState, true);
+  timerAlarmWrite(encoder_timer, 50, true); // calls every 50 us (safer than 5us)
+  timerAlarmEnable(encoder_timer);
 
   // Motors
-  Timer3.initialize(20);
-
   for (i = 0; i < kNumMot; i++)
   {
-    mot[i].init(kMotDirPin[i], kMotPwmPin[i]);
+    // Inizializza passando l'indice del motore (0-3)
+    mot[i].init(i);
   }
 
   // Controllers
@@ -210,8 +224,9 @@ void Robot::initMRAC(uint8_t index)
 void Robot::updateState(uint32_t ticks_left, uint32_t ticks_right)
 {
 
-  double d1 = double(ticks_left)/kMotEncRes*2*M_PI*0.05/2;
-  double d2 = double(ticks_right)/kMotEncRes*2*M_PI*0.05/2;
+  // Fix: Use wheel diameter from config instead of hardcoded 0.05
+  double d1 = double(ticks_left)/kMotEncRes*2*M_PI*kRobotWhD[0]/2;
+  double d2 = double(ticks_right)/kMotEncRes*2*M_PI*kRobotWhD[0]/2;
   double delta_d = (d2+d1)/2;
   double delta_theta = (d2-d1)/(2*wheelbase);
   x = x + delta_d*cos(theta + delta_theta/2);

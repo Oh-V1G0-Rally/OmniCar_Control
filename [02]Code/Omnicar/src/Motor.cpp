@@ -1,49 +1,40 @@
 #include "Motor.h"
+#include "robot_config.h"
 
-
-
-
-
-void Motor::init(const int pin_dir, const int pin_pwm)
+void Motor::init(uint8_t idx)
 {
-  dir_pin = pin_dir;
-  pwm_pin = pin_pwm;
+  m_idx = idx;
 
-  pinMode(dir_pin, OUTPUT);
-  pinMode(pwm_pin, OUTPUT);
+  pinMode(kMotDirPin[m_idx], OUTPUT);
+  pinMode(kMotPWMPin[m_idx], OUTPUT);
 
-  enable = true;
-  pwm = 0;
+  ledcSetup(kMotPWMCh[m_idx], kMotPWMFreq, kMotPWMRes);
+  ledcAttachPin(kMotPWMPin[m_idx], kMotPWMCh[m_idx]);
+
+  m_enable = true;
+  m_pwm = 0;
+
   setPWM(0);
-
-  if ((pwm_pin == TIMER3_A_PIN) || (pwm_pin == TIMER3_B_PIN))
-  {
-    Timer3.pwm(pwm_pin, 0);
-  }
-  else if ((pwm_pin == TIMER1_A_PIN) || (pwm_pin == TIMER1_B_PIN))
-  {
-    Timer1.pwm(pwm_pin, 0);
-  }
 }
 
 
 
 
 
-void Motor::setPWM(int16_t new_pwm)
+void Motor::setPWM(int32_t new_pwm)
 {
   // Saturation
-  if (new_pwm > kMotPWMmax)
+  if (new_pwm > kMotPWMMax)
   {
-    new_pwm = kMotPWMmax;
+    new_pwm = kMotPWMMax;
   }
-  else if (new_pwm < -kMotPWMmax)
+  else if (new_pwm < -kMotPWMMax)
   {
-    new_pwm = -kMotPWMmax;
+    new_pwm = -kMotPWMMax;
   }
 
   // Reset if disabled
-  if (!enable)
+  if (!m_enable)
   {
     new_pwm = 0;
   }
@@ -51,59 +42,51 @@ void Motor::setPWM(int16_t new_pwm)
   // Limit PWM change
   if (kMotPWMDeltaMaxEnabled)
   {
-    if (new_pwm - pwm > kMotPWMDeltaMax)
+    if (new_pwm - m_pwm > kMotPWMDeltaMax)
     {
-      new_pwm = pwm + kMotPWMDeltaMax;
+      new_pwm = m_pwm + kMotPWMDeltaMax;
     }
-    else if (new_pwm - pwm < -kMotPWMDeltaMax)
+    else if (new_pwm - m_pwm < -kMotPWMDeltaMax)
     {
-      new_pwm = pwm - kMotPWMDeltaMax;
+      new_pwm = m_pwm - kMotPWMDeltaMax;
     }
   }
 
   // Set pwm
-  if (enable)
+  if (m_enable)
   {
     if (new_pwm >= 0)
     {
-      digitalWrite(dir_pin, 0);
+      if (kMotPWMInvert[m_idx])
+      {
+        digitalWrite(kMotDirPin[m_idx], 1);
+      }
+      else
+      {
+        digitalWrite(kMotDirPin[m_idx], 0);
+      }
 
-      if ((pwm_pin == TIMER3_A_PIN) || (pwm_pin == TIMER3_B_PIN))
-      {
-        Timer3.setPwmDuty(pwm_pin, new_pwm);
-      }
-      else if ((pwm_pin == TIMER1_A_PIN) || (pwm_pin == TIMER1_B_PIN))
-      {
-        Timer1.setPwmDuty(pwm_pin, new_pwm);
-      }
+      ledcWrite(kMotPWMCh[m_idx], new_pwm);
     }
     else
     {
-      digitalWrite(dir_pin, 1);
+      if (kMotPWMInvert[m_idx])
+      {
+        digitalWrite(kMotDirPin[m_idx], 0);
+      }
+      else
+      {
+        digitalWrite(kMotDirPin[m_idx], 1);
+      }
 
-      if ((pwm_pin == TIMER3_A_PIN) || (pwm_pin == TIMER3_B_PIN))
-      {
-        Timer3.setPwmDuty(pwm_pin, -new_pwm);
-      }
-      else if ((pwm_pin == TIMER1_A_PIN) || (pwm_pin == TIMER1_B_PIN))
-      {
-        Timer1.setPwmDuty(pwm_pin, -new_pwm);
-      }
+      ledcWrite(kMotPWMCh[m_idx], (uint32_t)(-new_pwm));
     }
-
   }
   else
   {
-    if ((pwm_pin == TIMER3_A_PIN) || (pwm_pin == TIMER3_B_PIN))
-    {
-      Timer3.setPwmDuty(pwm_pin, new_pwm);
-    }
-    else if ((pwm_pin == TIMER1_A_PIN) || (pwm_pin == TIMER1_B_PIN))
-    {
-      Timer1.setPwmDuty(pwm_pin, new_pwm);
-    }
+    ledcWrite(kMotPWMCh[m_idx], new_pwm);
   }
 
   // Save pwm value
-  pwm = new_pwm;
+  m_pwm = new_pwm;
 }

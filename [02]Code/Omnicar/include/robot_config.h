@@ -24,12 +24,33 @@ const float kRobotL[] = {
 const float kRobotWhD[] = { 0.060, 0.060, 0.060, 0.060 }; //!< Wheel diameters (m)
 const float kRobotBattVnom = 11.1f;                       //!< Battery 3S1P
 
+/*******************************************************************************
+ * @brief MQTT configuration
+ *
+ * Please create the hotspot in your PC with the following configuration:
+ * - Wi-Fi
+ *   - SSID   : "esp32-5dpo-hotspot" (kMQTTWiFiSSID)
+ *   - Mode   : Access Point
+ *   - Band   : B/G (2.4GHz)
+ *   - Channel: 3 (2422MHz) (check WiFi analyser to see the best channel)
+ * - Wi-Fi Security
+ *   - Security: WPA/WPA2 Personal
+ *   - Password: 5dpo5dpo (kMQTTWiFiPass)
+ ******************************************************************************/
+// constexpr char kMQTTWiFiSSID[] =
+//     "sousarbarb97-hotspot";                    //!< Wi-Fi Hotspot SSID
+// constexpr char kMQTTWiFiPass[] = "5dpo5dpo";   //!< Wi-Fi password
+// constexpr char kMQTTServerIP[] = "10.42.0.1";  //!< MQTT server IP (PC)
+
 /******************************************************************************
  * Pinout Mapping - OMNICAR ESP32
  ******************************************************************************/
 
 // --- MOTORS (PWM & DIRECTION) ---
 // Utilizziamo l'API LEDC di ESP32 per PWM ad alta risoluzione
+// constexpr uint32_t kMotPWMFreq = 19500;     //!< REAL:
+constexpr uint32_t kMotPWMFreq = 50;     //!< DEBUG: 50Hz per test oscilloscopio (era 19500)
+constexpr uint8_t kMotPWMRes = 12;       //!< Resolution (12 bits = 0-4095)
 const uint8_t kMotPWMPin[] = { 13, 14, 26, 33 }; // FL, FR, RL, RR
 const uint8_t kMotDirPin[] = { 12, 27, 25, 32 }; // FL, FR, RL, RR
 const uint8_t kMotPWMCh[]  = { 0, 1, 2, 3 };     // Canali LEDC indipendenti
@@ -38,6 +59,9 @@ const uint8_t kMotPWMCh[]  = { 0, 1, 2, 3 };     // Canali LEDC indipendenti
 // Nota: 34, 35, 36, 39 richiedono pull-up esterni!
 const uint8_t kMotEncPinA[] = { 34, 36, 18, 21 }; // FL, FR, RL, RR
 const uint8_t kMotEncPinB[] = { 35, 39, 19, 22 }; // FL, FR, RL, RR
+const uint8_t kMotEncPin[kNumMot][2] = {
+  {34, 35}, {36, 39}, {18, 19}, {21, 22}
+};
 
 // --- PERIPHERALS ---
 //const uint8_t kI2C_SDA = 21; // Attenzione: condiviso con Encoder RR A se non rimappato
@@ -51,9 +75,12 @@ const float kMotNgear  = 18.75;      //!< Gear reduction ratio
 const float kMotEncRes = 64.0f * 4.0f; //!< Quad pulses per revolution
 
 // PWM Parametrization (ESP32 Specific)
-constexpr uint32_t kMotPWMFreq = 20000; //!< 20kHz per evitare ronzio udibile
-constexpr uint8_t kMotPWMRes   = 10;    //!< 10 bit resolution (0-1023)
 constexpr int32_t kMotPWMMax   = (1 << kMotPWMRes) - 1;
+
+// Parametri aggiuntivi per la nuova implementazione Motor
+const bool kMotPWMInvert[] = { false, false, false, false }; // Inversione direzione per ogni motore
+const bool kMotPWMDeltaMaxEnabled = true;                    // Abilita limitazione accelerazione
+const int kMotPWMDeltaMax = 200;                             // Variazione massima PWM per ciclo
 
 // Low Level Controller (Timing)
 const unsigned long kMotCtrlFreq = 50UL;               //!< Loop a 50Hz (minimo ROS)
@@ -70,6 +97,8 @@ const float kMotModelKp  = 4.5000f;  //!< Gain (rad.s^-1 / V)
 const float kMotModelTau = 0.1000f;  //!< Time constant (s)
 const float kMotModelLag = 0.0000;   //!< lag lag (s)
 const float kMotVmax     = 11.1f;    //!< Max battery voltage
+constexpr float kMotWmin = -50.0f;  //!< minimum motor angular velocity (rad/s)
+
 
 // PI Gains (Derived via IMC Tuning) 
 const float kMotCtrlTauCl = kMotModelTau / 1.0f;                            //IMC desired time constant for the closed-loop (s))
@@ -86,5 +115,12 @@ const float kEncImp2MotW = (2.0f * PI * 1000000.0f) / (kMotCtrlTimeUs * kMotNgea
 
 // Volts to PWM (0..1023)
 const float kMotV2MotPWM = kMotPWMMax * 1.0 / kRobotBattVnom;
+
+// --- SPI CUSTOM CONFIGURATION ---
+// Remapping necessario perché Encoder RL occupa i pin 18 (SCK) e 19 (MISO)
+const int8_t kSpiSCK  = 17; // Pin alternativo (TX2)
+const int8_t kSpiMISO = 16; // Pin alternativo (RX2)
+const int8_t kSpiMOSI = 23; // Default VSPI MOSI (OK)
+const int8_t kSpiCS   = 5;  // Default VSPI CS (OK)
 
 #endif
