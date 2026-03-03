@@ -49,44 +49,37 @@ void setup() {
   robot.init(serialWriteChannel);
 
   Serial.println("Robot initialized.");
-  Serial.println("Starting sequence: FL -> FR -> RL -> RR (Forward/Backward)");
+  Serial.println("Starting sequence: (Forward/Backward)");
   Serial.println("WARNING: Ensure wheels are free to move!");
   delay(2000); // Pausa di sicurezza prima di partire
 }
 
 void loop() {
-  // Ciclo su tutti i 4 motori (0=FL, 1=FR, 2=RL, 3=RR)
-  // for (int i = 0; i < kNumMot; i++) {
-    
-  //   // --- AVANTI ---
-  //   Serial.printf("Motor %d: FORWARD (PWM 1000)\n", i);
-  //   // setMotorPWM disabilita il PID e scrive direttamente il PWM (range +/- 4095)
-  //   robot.setMotorPWM(i, 1000); 
-  //   delay(1000); // Gira per 1 secondo
+  const int PWM_test = 2048; // 50% duty cycle (2048/4095)
 
-  //   // --- STOP ---
-  //   robot.setMotorPWM(i, 0);
-  //   delay(500);  // Pausa breve
+  for (int i = 0; i < kNumMot; i++) {
+    // --- AVANTI ---
+    // setMotorPWM gestisce automaticamente il pin DIR: PWM positivo -> Avanti
+    Serial.printf("Motor %d: FORWARD (+%d)\n", i, PWM_test);
+    robot.setMotorPWM(i, PWM_test); 
+    delay(2000); 
 
-  //   // --- INDIETRO ---
-  //   Serial.printf("Motor %d: BACKWARD (PWM -1000)\n", i);
-  //   robot.setMotorPWM(i, -1000); 
-  //   delay(1000); // Gira per 1 secondo
-
-  //   // --- STOP ---
-  //   robot.setMotorPWM(i, 0);
-  //   delay(500);  // Pausa prima del prossimo motore
-  // }
-
-  Serial.printf("Motor %d: FORWARD (PWM 1000)\n", 0);
-    // setMotorPWM disabilita il PID e scrive direttamente il PWM (range +/- 4095)
-    robot.setMotorPWM(0, 2000); 
-    delay(1000); // Gira per 1 secondo
     // --- STOP ---
-    robot.setMotorPWM(0, 0);
-    delay(1000);  // Pausa prima del prossimo motore
+    robot.setMotorPWM(i, 0);
+    delay(1000);
 
-  Serial.println("Sequence complete. Restarting in 2 seconds...");
+    // --- INDIETRO ---
+    // Passando un valore negativo, la classe Motor inverte automaticamente il pin DIR
+    Serial.printf("Motor %d: BACKWARD (-%d)\n", i, PWM_test);
+    robot.setMotorPWM(i, -PWM_test); 
+    delay(2000);
+
+    // --- STOP ---
+    robot.setMotorPWM(i, 0);
+    delay(1000);
+  }
+
+  Serial.println("Full sequence complete. Restarting in 2 seconds...");
   delay(2000);
 }
 

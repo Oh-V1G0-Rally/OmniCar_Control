@@ -48,8 +48,8 @@ const float kRobotBattVnom = 11.1f;                       //!< Battery 3S1P
 
 // --- MOTORS (PWM & DIRECTION) ---
 // Utilizziamo l'API LEDC di ESP32 per PWM ad alta risoluzione
-// constexpr uint32_t kMotPWMFreq = 19500;     //!< REAL:
-constexpr uint32_t kMotPWMFreq = 50;     //!< DEBUG: 50Hz per test oscilloscopio (era 19500)
+// constexpr uint32_t kMotPWMFreq = 20000;     //!< REAL:
+constexpr uint32_t kMotPWMFreq = 19500;     //!< DEBUG: 50Hz per test oscilloscopio (era 19500)
 constexpr uint8_t kMotPWMRes = 12;       //!< Resolution (12 bits = 0-4095)
 const uint8_t kMotPWMPin[] = { 13, 14, 26, 33 }; // FL, FR, RL, RR
 const uint8_t kMotDirPin[] = { 12, 27, 25, 32 }; // FL, FR, RL, RR
@@ -70,17 +70,18 @@ const uint8_t kMotEncPin[kNumMot][2] = {
 /******************************************************************************
  * Motor & Control Parameters
  ******************************************************************************/
-const float kMotNgear  = 18.75;      //!< Gear reduction ratio
+const float kMotNgear  = 20.4;      //!< Gear reduction ratio
 // #TOCHECK 
-const float kMotEncRes = 64.0f * 4.0f; //!< Quad pulses per revolution
+//const float kMotEncRes = 64.0f * 4.0f; //!< Quad pulses per revolution
+const float kMotEncRes = 64.0f * 20.4f; //!< Quad pulses per revolution
 
 // PWM Parametrization (ESP32 Specific)
 constexpr int32_t kMotPWMMax   = (1 << kMotPWMRes) - 1;
 
 // Parametri aggiuntivi per la nuova implementazione Motor
 const bool kMotPWMInvert[] = { false, false, false, false }; // Inversione direzione per ogni motore
-const bool kMotPWMDeltaMaxEnabled = true;                    // Abilita limitazione accelerazione
-const int kMotPWMDeltaMax = 200;                             // Variazione massima PWM per ciclo
+const bool kMotPWMDeltaMaxEnabled = false;                    // Abilita limitazione accelerazione
+const int kMotPWMDeltaMax = 1000;                             // Variazione massima PWM per ciclo
 
 // Low Level Controller (Timing)
 const unsigned long kMotCtrlFreq = 50UL;               //!< Loop a 50Hz (minimo ROS)
