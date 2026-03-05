@@ -37,10 +37,10 @@ const float kRobotBattVnom = 11.1f;                       //!< Battery 3S1P
  *   - Security: WPA/WPA2 Personal
  *   - Password: 5dpo5dpo (kMQTTWiFiPass)
  ******************************************************************************/
-// constexpr char kMQTTWiFiSSID[] =
-//     "sousarbarb97-hotspot";                    //!< Wi-Fi Hotspot SSID
-// constexpr char kMQTTWiFiPass[] = "5dpo5dpo";   //!< Wi-Fi password
-// constexpr char kMQTTServerIP[] = "10.42.0.1";  //!< MQTT server IP (PC)
+constexpr char kMQTTWiFiSSID[] =
+    "C2SR_Lab_Exp";                    //!< Wi-Fi Hotspot SSID
+constexpr char kMQTTWiFiPass[] = "c2sr-robotics";   //!< Wi-Fi password
+constexpr char kMQTTServerIP[] = "192.168.31.144";  //!< MQTT server IP (PC)
 
 /******************************************************************************
  * Pinout Mapping - OMNICAR ESP32
