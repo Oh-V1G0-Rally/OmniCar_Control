@@ -57,8 +57,8 @@ const uint8_t kMotPWMCh[]  = { 0, 1, 2, 3 };     // Canali LEDC indipendenti
 
 // --- ENCODERS ---
 // Nota: 34, 35, 36, 39 richiedono pull-up esterni!
-const uint8_t kMotEncPinA[] = { 34, 36, 18, 21 }; // FL, FR, RL, RR
-const uint8_t kMotEncPinB[] = { 35, 39, 19, 22 }; // FL, FR, RL, RR
+const uint8_t kMotEncPinA[] = { 16, 5, 19, 22 }; // FL, FR, RL, RR
+const uint8_t kMotEncPinB[] = { 17, 18, 21, 23 }; // FL, FR, RL, RR
 const uint8_t kMotEncPin[kNumMot][2] = {
   {34, 35}, {36, 39}, {18, 19}, {21, 22}
 };
@@ -70,10 +70,10 @@ const uint8_t kMotEncPin[kNumMot][2] = {
 /******************************************************************************
  * Motor & Control Parameters
  ******************************************************************************/
-const float kMotNgear  = 20.4;      //!< Gear reduction ratio
+const float kMotNgear  = 18.75;      //!< Gear reduction ratio
 // #TOCHECK 
 //const float kMotEncRes = 64.0f * 4.0f; //!< Quad pulses per revolution
-const float kMotEncRes = 64.0f * 20.4f; //!< Quad pulses per revolution
+const float kMotEncRes = 64.0f * 18.75f; //!< Quad pulses per revolution
 
 // PWM Parametrization (ESP32 Specific)
 constexpr int32_t kMotPWMMax   = (1 << kMotPWMRes) - 1;

@@ -54,34 +54,157 @@ void setup() {
   delay(2000); // Pausa di sicurezza prima di partire
 }
 
-void loop() {
-  const int PWM_test = 2048; // 50% duty cycle (2048/4095)
+// // LOOP SINGOLO
+// void loop() {
+//   uint32_t dt = 0; // Variabile delta time per robot.update
+//   int idx_mot = 0;
 
-  for (int i = 0; i < kNumMot; i++) {
+//   // Richiedi input utente
+//   Serial.println("\n=========================================");
+//   Serial.println("   TEST MANUALE ENCODER (Ruota a mano)");
+//   Serial.println("   Inserisci indice motore (0-3) per iniziare.");
+//   Serial.println("=========================================");
+
+//   while (Serial.available() == 0) {
+//     delay(10);
+//   }
+  
+//   idx_mot = Serial.parseInt();
+//   // Pulisci il buffer seriale (rimuovi newline)
+//   while (Serial.available()) { Serial.read(); }
+
+//   if (idx_mot >= 0 && idx_mot < kNumMot) {
+//     Serial.printf("--> MONITORAGGIO MOTORE %d ATTIVO\n", idx_mot);
+//     Serial.println("    Ruota la ruota manualmente.");
+//     Serial.println("    Invia un qualsiasi carattere per uscire e cambiare motore.");
+    
+//     // Assicurati che il motore sia spento (libero)
+//     robot.setMotorPWM(idx_mot, 0);
+
+//     // Loop finché non si riceve input seriale
+//     while (Serial.available() == 0) {
+//       robot.update(dt); // Aggiorna i contatori degli encoder (trasferisce da delta a tick)
+//       Serial.printf("MOT[%d] | Ticks: %d | Odo: %d\n", 
+//                     idx_mot, robot.enc[idx_mot].tick, robot.enc[idx_mot].odo);
+//       delay(100); // Stampa ogni 100ms
+//     }
+
+//     // Pulisci il buffer all'uscita
+//     while (Serial.available()) { Serial.read(); }
+//     Serial.println("--> Uscita monitoraggio.");
+
+//   } else {
+//     Serial.printf("Indice %d non valido! Inserire 0, 1, 2 o 3.\n", idx_mot);
+//   }
+// }
+
+// LOOP SINGOLO su richiesta
+void loop() {
+  const int PWM_test = 4000; // PWM moderato per il test (circa 35%)
+  uint32_t dt = 0; // Variabile delta time per robot.update
+  unsigned long start_time;
+  int idx_mot = 0;
+
+  // Richiedi input utente
+  Serial.println("\n--- Inserisci indice motore (0-3) per avviare il test: ---");
+  while (Serial.available() == 0) {
+    delay(10);
+  }
+  
+  idx_mot = Serial.parseInt();
+  // Pulisci il buffer seriale (rimuovi newline)
+  while (Serial.available()) { Serial.read(); }
+
+  if (idx_mot >= 0 && idx_mot < kNumMot) {
+
     // --- AVANTI ---
-    // setMotorPWM gestisce automaticamente il pin DIR: PWM positivo -> Avanti
-    Serial.printf("Motor %d: FORWARD (+%d)\n", i, PWM_test);
-    robot.setMotorPWM(i, PWM_test); 
-    delay(2000); 
+    Serial.printf("Motor %d: FORWARD (+%d)\n", idx_mot, PWM_test);
+    robot.setMotorPWM(idx_mot, PWM_test); 
+    
+    // Esegui per 3 secondi monitorando l'encoder
+    start_time = millis();
+    while(millis() - start_time < 3000) {
+      robot.update(dt); // Aggiorna i contatori degli encoder (trasferisce da delta a tick)
+      Serial.printf("MOT[%d] >> PWM: %d | Ticks: %d | Odo: %d\n", 
+                    idx_mot, PWM_test, robot.enc[idx_mot].tick, robot.enc[idx_mot].odo);
+      delay(100); // Stampa ogni 100ms
+    }
 
     // --- STOP ---
-    robot.setMotorPWM(i, 0);
-    delay(1000);
+    robot.setMotorPWM(idx_mot, 0);
+    delay(500); // Breve pausa
+    Serial.printf("MOT[%d] STOPPED. Final Ticks: %d\n", idx_mot, robot.enc[idx_mot].tick);
+    delay(500);
 
     // --- INDIETRO ---
-    // Passando un valore negativo, la classe Motor inverte automaticamente il pin DIR
-    Serial.printf("Motor %d: BACKWARD (-%d)\n", i, PWM_test);
-    robot.setMotorPWM(i, -PWM_test); 
-    delay(2000);
+    Serial.printf("Motor %d: BACKWARD (-%d)\n", idx_mot, PWM_test);
+    robot.setMotorPWM(idx_mot, -PWM_test); 
+    
+    // Esegui per 3 secondi monitorando l'encoder
+    start_time = millis();
+    while(millis() - start_time < 3000) {
+      robot.update(dt);
+      Serial.printf("MOT[%d] >> PWM: %d | Ticks: %d | Odo: %d\n", 
+                    idx_mot, -PWM_test, robot.enc[idx_mot].tick, robot.enc[idx_mot].odo);
+      delay(100);
+    }
 
     // --- STOP ---
-    robot.setMotorPWM(i, 0);
+    robot.setMotorPWM(idx_mot, 0);
     delay(1000);
+    Serial.println("--- Test Complete. ---");
+  } else {
+    Serial.printf("Indice %d non valido! Inserire 0, 1, 2 o 3.\n", idx_mot);
   }
-
-  Serial.println("Full sequence complete. Restarting in 2 seconds...");
-  delay(2000);
 }
+
+// SEQUENZA TUTTI MOTORI
+// void loop() {
+//   const int PWM_test = 1500; // PWM moderato per il test (circa 35%)
+//   uint32_t dt = 0; // Variabile delta time per robot.update
+//   unsigned long start_time;
+
+//   for (int i = 0; i < kNumMot; i++) {
+//     // --- AVANTI ---
+//     Serial.printf("Motor %d: FORWARD (+%d)\n", i, PWM_test);
+//     robot.setMotorPWM(i, PWM_test); 
+    
+//     // Esegui per 3 secondi monitorando l'encoder
+//     start_time = millis();
+//     while(millis() - start_time < 3000) {
+//       robot.update(dt); // Aggiorna i contatori degli encoder (trasferisce da delta a tick)
+//       Serial.printf("MOT[%d] >> PWM: %d | Ticks: %d | Odo: %d\n", 
+//                     i, PWM_test, robot.enc[i].tick, robot.enc[i].odo);
+//       delay(100); // Stampa ogni 100ms
+//     }
+
+//     // --- STOP ---
+//     robot.setMotorPWM(i, 0);
+//     delay(500); // Breve pausa
+//     Serial.printf("MOT[%d] STOPPED. Final Ticks: %d\n", i, robot.enc[i].tick);
+//     delay(500);
+
+//     // --- INDIETRO ---
+//     Serial.printf("Motor %d: BACKWARD (-%d)\n", i, PWM_test);
+//     robot.setMotorPWM(i, -PWM_test); 
+    
+//     // Esegui per 3 secondi monitorando l'encoder
+//     start_time = millis();
+//     while(millis() - start_time < 3000) {
+//       robot.update(dt);
+//       Serial.printf("MOT[%d] >> PWM: %d | Ticks: %d | Odo: %d\n", 
+//                     i, -PWM_test, robot.enc[i].tick, robot.enc[i].odo);
+//       delay(100);
+//     }
+
+//     // --- STOP ---
+//     robot.setMotorPWM(i, 0);
+//     delay(1000);
+//   }
+
+//   Serial.println("--- Sequence Complete. Restarting... ---");
+//   delay(3000);
+// }
 
 
 /******************************************************************************
