@@ -5,6 +5,7 @@
 #include "Adafruit_MotorShield.h"
 #include "robot_config.h"
 #include "Robot.h"
+#include "MotorAutotuner.h"
 
 /******************************************************************************
  * GLOBAL VARIABLES
@@ -19,6 +20,7 @@ channels_t serial_channels;
 
 Robot robot;
 Encoder *encoders = robot.enc;
+MotorAutotuner tuner(&robot);
 
 
 /******************************************************************************
@@ -29,11 +31,6 @@ void serialWrite(uint8_t b);
 void serialWriteChannel(char channel, int32_t value);
 void serialRead();
 void checkMotorsTimeout();
-
-// // Callback per il debug seriale richiesta da Robot::init
-// void onSerialWrite(char c, int32_t v) {
-//   // Opzionale: stampa messaggi di debug interni del robot se necessario
-// }
 
 void setup() {
   // Inizializza la seriale per il monitoraggio
@@ -71,6 +68,97 @@ void setup() {
   delay(2000); // Pausa di sicurezza prima di partire
 }
 
+#pragma region LOOP_TUNING
+// // LOOP con MotorAutotuner
+// void loop() {
+//   //ArduinoOTA.handle();
+  
+//   // Se il tuner è attivo, esegui il suo ciclo di update (non-blocking)
+//   if (tuner.isRunning()) {
+//     // Controllo ABORT: Se premi 'x', ferma tutto immediatamente
+//     if (Serial.available() > 0) {
+//       char c = Serial.peek(); // Guarda il carattere senza rimuoverlo subito
+//       if (c == 'x' || c == 'X') {
+//         Serial.read(); // Rimuovi dal buffer
+//         tuner.stop();
+//         return; // Ricomincia il loop
+//       }
+//     }
+//     tuner.update();
+//   } 
+//   // Altrimenti attendi comandi seriali
+//   else {
+//     if (Serial.available() > 0) {
+//       char c = Serial.read();
+//       // Invia 't' o 'T' per avviare il tuning
+//       if (c == 't' || c == 'T') {
+//         Serial.println("\n--- SETUP AUTOTUNER ---");
+//         Serial.print("Inserisci indice motore (0-3): ");
+//         while (!Serial.available()) delay(10);
+//         int mot = Serial.parseInt();
+        
+//         Serial.print("\nPWM step 4000: ");
+//         // while (!Serial.available()) delay(10);
+//         // int pwm = Serial.parseInt();
+//         int pwm = 4095;
+
+//         // Pulisci buffer
+//         while (Serial.available()) Serial.read();
+        
+//         tuner.start(mot, pwm);
+//       }
+//     }
+//   }
+// }
+#pragma endregion
+
+#pragma region LOOP_MANUALE
+// LOOP MANUALE
+void loop() {
+  uint32_t dt = 0; // Variabile delta time per robot.update
+  int idx_mot = 0;
+
+  // Richiedi input utente
+  Serial.println("\n=========================================");
+  Serial.println("   TEST MANUALE ENCODER (Ruota a mano)");
+  Serial.println("   Inserisci indice motore (0-3) per iniziare.");
+  Serial.println("=========================================");
+
+  while (Serial.available() == 0) {
+    delay(10);
+  }
+  
+  idx_mot = Serial.parseInt();
+  // Pulisci il buffer seriale (rimuovi newline)
+  while (Serial.available()) { Serial.read(); }
+
+  if (idx_mot >= 0 && idx_mot < kNumMot) {
+    Serial.printf("--> MONITORAGGIO MOTORE %d ATTIVO\n", idx_mot);
+    Serial.println("    Ruota la ruota manualmente.");
+    Serial.println("    Invia un qualsiasi carattere per uscire e cambiare motore.");
+    
+    // Assicurati che il motore sia spento (libero)
+    robot.setMotorPWM(idx_mot, 0);
+
+    // Loop finché non si riceve input seriale
+    while (Serial.available() == 0) {
+      robot.update(dt); // Aggiorna i contatori degli encoder (trasferisce da delta a tick)
+      Serial.printf("MOT[%d] | Ticks: %d | Odo: %d\n", 
+                    idx_mot, robot.enc[idx_mot].tick, robot.enc[idx_mot].odo);
+      delay(20); // Stampa ogni 100ms
+    }
+
+    // Pulisci il buffer all'uscita
+    while (Serial.available()) { Serial.read(); }
+    Serial.println("--> Uscita monitoraggio.");
+
+  } else {
+    Serial.printf("Indice %d non valido! Inserire 0, 1, 2 o 3.\n", idx_mot);
+  }
+}
+#pragma endregion
+
+#pragma region LOOP_TEST_SINGOLO
 // // LOOP SINGOLO su richiesta
 // void loop() {
 //   const int PWM_test = 4000; // PWM moderato per il test (circa 35%)
@@ -133,65 +221,15 @@ void setup() {
 //     Serial.printf("Indice %d non valido! Inserire 0, 1, 2 o 3.\n", idx_mot);
 //   }
 // }
+#pragma endregion
 
-// LOOP MAnuale
-void loop() {
-  uint32_t dt = 0; // Variabile delta time per robot.update
-  int idx_mot = 0;
-
-  ArduinoOTA.handle();
-  
-
-  // Richiedi input utente
-  Serial.println("\n=========================================");
-  Serial.println("   TEST MANUALE ENCODER (Ruota a mano)");
-  Serial.println("   Inserisci indice motore (0-3) per iniziare.");
-  Serial.println("=========================================");
-
-  while (Serial.available() == 0) {
-    delay(10);
-  }
-  
-  idx_mot = Serial.parseInt();
-  // Pulisci il buffer seriale (rimuovi newline)
-  while (Serial.available()) { Serial.read(); }
-
-  if (idx_mot >= 0 && idx_mot < kNumMot) {
-    Serial.printf("--> MONITORAGGIO MOTORE %d ATTIVO\n", idx_mot);
-    Serial.println("    Ruota la ruota manualmente.");
-    Serial.println("    Invia un qualsiasi carattere per uscire e cambiare motore.");
-
-    ArduinoOTA.handle();
-    
-    // Assicurati che il motore sia spento (libero)
-    robot.setMotorPWM(idx_mot, 0);
-
-    // Loop finché non si riceve input seriale
-    while (Serial.available() == 0) {
-      robot.update(dt); // Aggiorna i contatori degli encoder (trasferisce da delta a tick)
-      Serial.printf("MOT[%d] | Ticks: %d | Odo: %d\n", 
-                    idx_mot, robot.enc[idx_mot].tick, robot.enc[idx_mot].odo);
-      delay(100); // Stampa ogni 100ms
-    }
-
-    // Pulisci il buffer all'uscita
-    while (Serial.available()) { Serial.read(); }
-    Serial.println("--> Uscita monitoraggio.");
-
-  } else {
-    Serial.printf("Indice %d non valido! Inserire 0, 1, 2 o 3.\n", idx_mot);
-  }
-}
-
-// // SEQUENZA TUTTI MOTORI
+#pragma region LOOP_TEST_SEQUENZA_TUTTI_MOTORI
 // void loop() {
 //   const int PWM_test = 1500; // PWM moderato per il test (circa 35%)
 //   uint32_t dt = 0; // Variabile delta time per robot.update
 //   unsigned long start_time;
-//   ArduinoOTA.handle();
 
 //   for (int i = 0; i < kNumMot; i++) {
-//     //ArduinoOTA.handle();
 //     // --- AVANTI ---
 //     Serial.printf("Motor %d: FORWARD (+%d)\n", i, PWM_test);
 //     robot.setMotorPWM(i, PWM_test); 
@@ -199,39 +237,6 @@ void loop() {
 //     // Esegui per 3 secondi monitorando l'encoder
 //     start_time = millis();
 //     while(millis() - start_time < 3000) {
-//       //ArduinoOTA.handle();
-//       robot.update(dt); // Aggiorna i contatori degli encoder (trasferisce da delta a tick)
-//       Serial.printf("MOT[%d] >> PWM: %d | Ticks: %d | Odo: %d\n", 
-//                     i, PWM_test, robot.enc[i].tick, robot.enc[i].odo);
-//       delay(100); // Stampa ogni 100ms
-//     }
-
-//     // --- STOP ---
-//     robot.setMotorPWM(i, 0);
-//     delay(500); // Breve pausa
-//     Serial.printf("MOT[%d] STOPPED. Final Ticks: %d\n", i, robot.enc[i].tick);
-//     delay(500);
-
-//     // --- INDIETRO ---
-//     Serial.printf("Motor %d: BACKWARD (-%d)\n", i, PWM_test);
-//     robot.setMotorPWM(i, -PWM_test); 
-    // SEQUENZA TUTTI MOTORI
-// void loop() {
-//   const int PWM_test = 1500; // PWM moderato per il test (circa 35%)
-//   uint32_t dt = 0; // Variabile delta time per robot.update
-//   unsigned long start_time;
-//   ArduinoOTA.handle();
-
-//   for (int i = 0; i < kNumMot; i++) {
-//     //ArduinoOTA.handle();
-//     // --- AVANTI ---
-//     Serial.printf("Motor %d: FORWARD (+%d)\n", i, PWM_test);
-//     robot.setMotorPWM(i, PWM_test); 
-    
-//     // Esegui per 3 secondi monitorando l'encoder
-//     start_time = millis();
-//     while(millis() - start_time < 3000) {
-//       //ArduinoOTA.handle();
 //       robot.update(dt); // Aggiorna i contatori degli encoder (trasferisce da delta a tick)
 //       Serial.printf("MOT[%d] >> PWM: %d | Ticks: %d | Odo: %d\n", 
 //                     i, PWM_test, robot.enc[i].tick, robot.enc[i].odo);
@@ -251,7 +256,6 @@ void loop() {
 //     // Esegui per 3 secondi monitorando l'encoder
 //     start_time = millis();
 //     while(millis() - start_time < 3000) {
-//       //ArduinoOTA.handle();
 //       robot.update(dt);
 //       Serial.printf("MOT[%d] >> PWM: %d | Ticks: %d | Odo: %d\n", 
 //                     i, -PWM_test, robot.enc[i].tick, robot.enc[i].odo);
@@ -259,7 +263,6 @@ void loop() {
 //     }
 
 //     // --- STOP ---
-//     //ArduinoOTA.handle();
 //     robot.setMotorPWM(i, 0);
 //     delay(1000);
 //   }
@@ -267,25 +270,40 @@ void loop() {
 //   Serial.println("--- Sequence Complete. Restarting... ---");
 //   delay(3000);
 // }
-//     // Esegui per 3 secondi monitorando l'encoder
-//     start_time = millis();
-//     while(millis() - start_time < 3000) {
-//       //ArduinoOTA.handle();
-//       robot.update(dt);
-//       Serial.printf("MOT[%d] >> PWM: %d | Ticks: %d | Odo: %d\n", 
-//                     i, -PWM_test, robot.enc[i].tick, robot.enc[i].odo);
-//       delay(100);
-//     }
+#pragma endregion
 
-//     // --- STOP ---
-//     //ArduinoOTA.handle();
-//     robot.setMotorPWM(i, 0);
-//     delay(1000);
+#pragma region OLD_WIFI_SETUP
+//-----------------------WI-FI---------------------------
+// const char* ssid = "C2SR_Lab_Exp";       // Inserisci il nome del tuo Wi-Fi
+// const char* password = "c2sr-robotics"; // Inserisci la password
+
+// void setup() {
+//   Serial.begin(115200);
+//   Serial.println("Avvio...");
+
+//   // 1. Connessione Wi-Fi
+//   WiFi.begin(ssid, password);
+//   while (WiFi.status() != WL_CONNECTED) {
+//     delay(500);
+//     Serial.print(".");
 //   }
 
-//   Serial.println("--- Sequence Complete. Restarting... ---");
-//   delay(3000);
+//   // 2. Inizializzazione OTA (necessaria per l'upload wireless)
+//   ArduinoOTA.begin();
+
+//   Serial.println("");
+//   Serial.println("Wi-Fi connesso!");
+//   Serial.print("Indirizzo IP della ESP32: ");
+//   Serial.println(WiFi.localIP()); // Ecco come trovi l'IP!
 // }
+
+// void loop() {
+//   // 3. Gestione continua della connessione OTA
+//   ArduinoOTA.handle(); 
+  
+//   // Il tuo codice va qui (non usare delay lunghi, o l'OTA fallirà)
+// }
+#pragma endregion
 
 
 /******************************************************************************
@@ -366,35 +384,3 @@ void checkMotorsTimeout() {
     timeout = 0;
   }
 }
-
-
-//-----------------------WI-FI---------------------------
-// const char* ssid = "C2SR_Lab_Exp";       // Inserisci il nome del tuo Wi-Fi
-// const char* password = "c2sr-robotics"; // Inserisci la password
-
-// void setup() {
-//   Serial.begin(115200);
-//   Serial.println("Avvio...");
-
-//   // 1. Connessione Wi-Fi
-//   WiFi.begin(ssid, password);
-//   while (WiFi.status() != WL_CONNECTED) {
-//     delay(500);
-//     Serial.print(".");
-//   }
-
-//   // 2. Inizializzazione OTA (necessaria per l'upload wireless)
-//   ArduinoOTA.begin();
-
-//   Serial.println("");
-//   Serial.println("Wi-Fi connesso!");
-//   Serial.print("Indirizzo IP della ESP32: ");
-//   Serial.println(WiFi.localIP()); // Ecco come trovi l'IP!
-// }
-
-// void loop() {
-//   // 3. Gestione continua della connessione OTA
-//   ArduinoOTA.handle(); 
-  
-//   // Il tuo codice va qui (non usare delay lunghi, o l'OTA fallirà)
-// }

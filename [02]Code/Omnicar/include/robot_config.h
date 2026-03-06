@@ -70,10 +70,10 @@ const uint8_t kMotEncPin[kNumMot][2] = {
 /******************************************************************************
  * Motor & Control Parameters
  ******************************************************************************/
-const float kMotNgear  = 18.75;      //!< Gear reduction ratio
+const float kMotNgear  = 18.75f;      //!< Gear reduction ratio
 // #TOCHECK 
 //const float kMotEncRes = 64.0f * 4.0f; //!< Quad pulses per revolution
-const float kMotEncRes = 64.0f * 18.75f; //!< Quad pulses per revolution
+const float kMotEncRes = 64.0f*4.0f; //!< Quad pulses per revolution
 
 // PWM Parametrization (ESP32 Specific)
 constexpr int32_t kMotPWMMax   = (1 << kMotPWMRes) - 1;
