@@ -134,102 +134,158 @@ void setup() {
 //   }
 // }
 
-// // LOOP MAnuale
-// void loop() {
-//   uint32_t dt = 0; // Variabile delta time per robot.update
-//   int idx_mot = 0;
-
-//   // Richiedi input utente
-//   Serial.println("\n=========================================");
-//   Serial.println("   TEST MANUALE ENCODER (Ruota a mano)");
-//   Serial.println("   Inserisci indice motore (0-3) per iniziare.");
-//   Serial.println("=========================================");
-
-//   while (Serial.available() == 0) {
-//     delay(10);
-//   }
-  
-//   idx_mot = Serial.parseInt();
-//   // Pulisci il buffer seriale (rimuovi newline)
-//   while (Serial.available()) { Serial.read(); }
-
-//   if (idx_mot >= 0 && idx_mot < kNumMot) {
-//     Serial.printf("--> MONITORAGGIO MOTORE %d ATTIVO\n", idx_mot);
-//     Serial.println("    Ruota la ruota manualmente.");
-//     Serial.println("    Invia un qualsiasi carattere per uscire e cambiare motore.");
-    
-//     // Assicurati che il motore sia spento (libero)
-//     robot.setMotorPWM(idx_mot, 0);
-
-//     // Loop finché non si riceve input seriale
-//     while (Serial.available() == 0) {
-//       robot.update(dt); // Aggiorna i contatori degli encoder (trasferisce da delta a tick)
-//       Serial.printf("MOT[%d] | Ticks: %d | Odo: %d\n", 
-//                     idx_mot, robot.enc[idx_mot].tick, robot.enc[idx_mot].odo);
-//       delay(100); // Stampa ogni 100ms
-//     }
-
-//     // Pulisci il buffer all'uscita
-//     while (Serial.available()) { Serial.read(); }
-//     Serial.println("--> Uscita monitoraggio.");
-
-//   } else {
-//     Serial.printf("Indice %d non valido! Inserire 0, 1, 2 o 3.\n", idx_mot);
-//   }
-// }
-
-// SEQUENZA TUTTI MOTORI
+// LOOP MAnuale
 void loop() {
-  const int PWM_test = 1500; // PWM moderato per il test (circa 35%)
   uint32_t dt = 0; // Variabile delta time per robot.update
-  unsigned long start_time;
-  ArduinoOTA.handle();
+  int idx_mot = 0;
 
-  for (int i = 0; i < kNumMot; i++) {
+  ArduinoOTA.handle();
+  
+
+  // Richiedi input utente
+  Serial.println("\n=========================================");
+  Serial.println("   TEST MANUALE ENCODER (Ruota a mano)");
+  Serial.println("   Inserisci indice motore (0-3) per iniziare.");
+  Serial.println("=========================================");
+
+  while (Serial.available() == 0) {
+    delay(10);
+  }
+  
+  idx_mot = Serial.parseInt();
+  // Pulisci il buffer seriale (rimuovi newline)
+  while (Serial.available()) { Serial.read(); }
+
+  if (idx_mot >= 0 && idx_mot < kNumMot) {
+    Serial.printf("--> MONITORAGGIO MOTORE %d ATTIVO\n", idx_mot);
+    Serial.println("    Ruota la ruota manualmente.");
+    Serial.println("    Invia un qualsiasi carattere per uscire e cambiare motore.");
+
     ArduinoOTA.handle();
-    // --- AVANTI ---
-    Serial.printf("Motor %d: FORWARD (+%d)\n", i, PWM_test);
-    robot.setMotorPWM(i, PWM_test); 
     
-    // Esegui per 3 secondi monitorando l'encoder
-    start_time = millis();
-    while(millis() - start_time < 3000) {
-      ArduinoOTA.handle();
+    // Assicurati che il motore sia spento (libero)
+    robot.setMotorPWM(idx_mot, 0);
+
+    // Loop finché non si riceve input seriale
+    while (Serial.available() == 0) {
       robot.update(dt); // Aggiorna i contatori degli encoder (trasferisce da delta a tick)
-      Serial.printf("MOT[%d] >> PWM: %d | Ticks: %d | Odo: %d\n", 
-                    i, PWM_test, robot.enc[i].tick, robot.enc[i].odo);
+      Serial.printf("MOT[%d] | Ticks: %d | Odo: %d\n", 
+                    idx_mot, robot.enc[idx_mot].tick, robot.enc[idx_mot].odo);
       delay(100); // Stampa ogni 100ms
     }
 
-    // --- STOP ---
-    robot.setMotorPWM(i, 0);
-    delay(500); // Breve pausa
-    Serial.printf("MOT[%d] STOPPED. Final Ticks: %d\n", i, robot.enc[i].tick);
-    delay(500);
+    // Pulisci il buffer all'uscita
+    while (Serial.available()) { Serial.read(); }
+    Serial.println("--> Uscita monitoraggio.");
 
-    // --- INDIETRO ---
-    Serial.printf("Motor %d: BACKWARD (-%d)\n", i, PWM_test);
-    robot.setMotorPWM(i, -PWM_test); 
-    
-    // Esegui per 3 secondi monitorando l'encoder
-    start_time = millis();
-    while(millis() - start_time < 3000) {
-      ArduinoOTA.handle();
-      robot.update(dt);
-      Serial.printf("MOT[%d] >> PWM: %d | Ticks: %d | Odo: %d\n", 
-                    i, -PWM_test, robot.enc[i].tick, robot.enc[i].odo);
-      delay(100);
-    }
-
-    // --- STOP ---
-    ArduinoOTA.handle();
-    robot.setMotorPWM(i, 0);
-    delay(1000);
+  } else {
+    Serial.printf("Indice %d non valido! Inserire 0, 1, 2 o 3.\n", idx_mot);
   }
-
-  Serial.println("--- Sequence Complete. Restarting... ---");
-  delay(3000);
 }
+
+// // SEQUENZA TUTTI MOTORI
+// void loop() {
+//   const int PWM_test = 1500; // PWM moderato per il test (circa 35%)
+//   uint32_t dt = 0; // Variabile delta time per robot.update
+//   unsigned long start_time;
+//   ArduinoOTA.handle();
+
+//   for (int i = 0; i < kNumMot; i++) {
+//     //ArduinoOTA.handle();
+//     // --- AVANTI ---
+//     Serial.printf("Motor %d: FORWARD (+%d)\n", i, PWM_test);
+//     robot.setMotorPWM(i, PWM_test); 
+    
+//     // Esegui per 3 secondi monitorando l'encoder
+//     start_time = millis();
+//     while(millis() - start_time < 3000) {
+//       //ArduinoOTA.handle();
+//       robot.update(dt); // Aggiorna i contatori degli encoder (trasferisce da delta a tick)
+//       Serial.printf("MOT[%d] >> PWM: %d | Ticks: %d | Odo: %d\n", 
+//                     i, PWM_test, robot.enc[i].tick, robot.enc[i].odo);
+//       delay(100); // Stampa ogni 100ms
+//     }
+
+//     // --- STOP ---
+//     robot.setMotorPWM(i, 0);
+//     delay(500); // Breve pausa
+//     Serial.printf("MOT[%d] STOPPED. Final Ticks: %d\n", i, robot.enc[i].tick);
+//     delay(500);
+
+//     // --- INDIETRO ---
+//     Serial.printf("Motor %d: BACKWARD (-%d)\n", i, PWM_test);
+//     robot.setMotorPWM(i, -PWM_test); 
+    // SEQUENZA TUTTI MOTORI
+// void loop() {
+//   const int PWM_test = 1500; // PWM moderato per il test (circa 35%)
+//   uint32_t dt = 0; // Variabile delta time per robot.update
+//   unsigned long start_time;
+//   ArduinoOTA.handle();
+
+//   for (int i = 0; i < kNumMot; i++) {
+//     //ArduinoOTA.handle();
+//     // --- AVANTI ---
+//     Serial.printf("Motor %d: FORWARD (+%d)\n", i, PWM_test);
+//     robot.setMotorPWM(i, PWM_test); 
+    
+//     // Esegui per 3 secondi monitorando l'encoder
+//     start_time = millis();
+//     while(millis() - start_time < 3000) {
+//       //ArduinoOTA.handle();
+//       robot.update(dt); // Aggiorna i contatori degli encoder (trasferisce da delta a tick)
+//       Serial.printf("MOT[%d] >> PWM: %d | Ticks: %d | Odo: %d\n", 
+//                     i, PWM_test, robot.enc[i].tick, robot.enc[i].odo);
+//       delay(100); // Stampa ogni 100ms
+//     }
+
+//     // --- STOP ---
+//     robot.setMotorPWM(i, 0);
+//     delay(500); // Breve pausa
+//     Serial.printf("MOT[%d] STOPPED. Final Ticks: %d\n", i, robot.enc[i].tick);
+//     delay(500);
+
+//     // --- INDIETRO ---
+//     Serial.printf("Motor %d: BACKWARD (-%d)\n", i, PWM_test);
+//     robot.setMotorPWM(i, -PWM_test); 
+    
+//     // Esegui per 3 secondi monitorando l'encoder
+//     start_time = millis();
+//     while(millis() - start_time < 3000) {
+//       //ArduinoOTA.handle();
+//       robot.update(dt);
+//       Serial.printf("MOT[%d] >> PWM: %d | Ticks: %d | Odo: %d\n", 
+//                     i, -PWM_test, robot.enc[i].tick, robot.enc[i].odo);
+//       delay(100);
+//     }
+
+//     // --- STOP ---
+//     //ArduinoOTA.handle();
+//     robot.setMotorPWM(i, 0);
+//     delay(1000);
+//   }
+
+//   Serial.println("--- Sequence Complete. Restarting... ---");
+//   delay(3000);
+// }
+//     // Esegui per 3 secondi monitorando l'encoder
+//     start_time = millis();
+//     while(millis() - start_time < 3000) {
+//       //ArduinoOTA.handle();
+//       robot.update(dt);
+//       Serial.printf("MOT[%d] >> PWM: %d | Ticks: %d | Odo: %d\n", 
+//                     i, -PWM_test, robot.enc[i].tick, robot.enc[i].odo);
+//       delay(100);
+//     }
+
+//     // --- STOP ---
+//     //ArduinoOTA.handle();
+//     robot.setMotorPWM(i, 0);
+//     delay(1000);
+//   }
+
+//   Serial.println("--- Sequence Complete. Restarting... ---");
+//   delay(3000);
+// }
 
 
 /******************************************************************************
