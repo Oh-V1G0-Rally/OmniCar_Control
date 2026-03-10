@@ -84,7 +84,7 @@ const bool kMotPWMDeltaMaxEnabled = false;                    // Abilita limitaz
 const int kMotPWMDeltaMax = 1000;                             // Variazione massima PWM per ciclo
 
 // Low Level Controller (Timing)
-const unsigned long kMotCtrlFreq = 50UL;               //!< Loop a 50Hz (minimo ROS)
+const unsigned long kMotCtrlFreq = 100UL;               //!< Loop a 50Hz (minimo ROS)
 const float kMotCtrlTime = 1.0f / kMotCtrlFreq;
 const unsigned long kMotCtrlTimeUs = 1000000UL / kMotCtrlFreq;
 const unsigned long kMotCtrlTimeout = 100UL;           //!< Watchdog (ms)

@@ -10,7 +10,7 @@ SKIP_DATA_ROWS = 5
 # Variabile per il percorso del file CSV da aprire
 # Esempio Linux: "/media/user/Storage/Desktop_Ale/OmniCar_Control/[02]Code/Omnicar/py_script/csv_test/M0_T1.csv"
 FILE_FOLDER_PATH = '/media/user/Storage/Desktop_Ale/OmniCar_Control/[02]Code/Omnicar/py_script/csv_test/'
-FILE_NAME = 'MA_LO_T1.csv'
+FILE_NAME = 'MA_NL_T1.csv'
 FILE_PATH = os.path.join(FILE_FOLDER_PATH, FILE_NAME)
 
 def main():
@@ -146,6 +146,71 @@ def main():
         plt.title(f"Analisi Combinata Motori: {os.path.basename(args.filename)}")
 
     fig.tight_layout()
+
+    # --- INTERATTIVITÀ: Cursore al click ---
+    cursors = {} # Cache per le annotazioni
+    
+    def get_cursor(ax):
+        if ax not in cursors:
+            annot = ax.annotate("", xy=(0,0), xytext=(10,10), textcoords="offset points",
+                                bbox=dict(boxstyle="round", fc="w", alpha=0.9),
+                                arrowprops=dict(arrowstyle="->"))
+            annot.set_visible(False)
+            annot.set_zorder(1000) # Assicura che il box sia sempre sopra le linee
+            cursors[ax] = annot
+        return cursors[ax]
+
+    def on_click(event):
+        if event.inaxes is None: return
+        
+        # 1. Trova l'indice temporale più vicino al click (asse X)
+        if not times: return
+        # Cerca l'indice nella lista 'times' che ha il valore più vicino a event.xdata
+        idx = min(range(len(times)), key=lambda i: abs(times[i] - event.xdata))
+        t_val = times[idx]
+        
+        # 2. Cerca la linea più vicina al click (distanza visiva in pixel)
+        min_dist = 50.0 # Soglia in pixel per attivare il cursore
+        found = False
+        
+        # Itera su tutti gli assi della figura (per gestire ax1 e ax2 sovrapposti)
+        for ax in fig.axes:
+            if ax.contains(event)[0]: # Se il click è nell'area di questo asse
+                for line in ax.lines:
+                    y_data = line.get_ydata()
+                    # Salta linee che non corrispondono ai dati temporali (es. linee verticali extra)
+                    if len(y_data) != len(times): continue
+                    
+                    y_val = y_data[idx]
+                    
+                    # Converti coordinate dati (tempo, valore) in coordinate schermo (pixel)
+                    pt_screen = ax.transData.transform((t_val, y_val))
+                    dist = ((pt_screen[0] - event.x)**2 + (pt_screen[1] - event.y)**2)**0.5
+                    
+                    if dist < min_dist:
+                        min_dist = dist
+                        found = True
+                        
+                        annot = get_cursor(ax)
+                        annot.xy = (t_val, y_val)
+                        text = f"{line.get_label()}\nT={t_val:.1f}\nVal={y_val:.2f}"
+                        annot.set_text(text)
+                        annot.set_visible(True)
+                        
+                        # Nascondi le annotazioni sugli altri assi per evitare sovrapposizioni
+                        for other_ax, other_annot in cursors.items():
+                            if other_ax != ax:
+                                other_annot.set_visible(False)
+        
+        if found:
+            fig.canvas.draw_idle()
+        else:
+            # Se clicchi nel vuoto, nascondi tutto
+            for annot in cursors.values():
+                annot.set_visible(False)
+            fig.canvas.draw_idle()
+
+    fig.canvas.mpl_connect('button_press_event', on_click)
 
     # Gestione chiusura esplicita con tasto 'q'
     def on_key(event):
