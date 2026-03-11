@@ -10,7 +10,7 @@ SKIP_DATA_ROWS = 5
 # Variabile per il percorso del file CSV da aprire
 # Esempio Linux: "/media/user/Storage/Desktop_Ale/OmniCar_Control/[02]Code/Omnicar/py_script/csv_test/M0_T1.csv"
 FILE_FOLDER_PATH = '/media/user/Storage/Desktop_Ale/OmniCar_Control/[02]Code/Omnicar/py_script/csv_test/'
-FILE_NAME = 'MA_NL_T1.csv'
+FILE_NAME = 'MA_LO_T5.csv'
 FILE_PATH = os.path.join(FILE_FOLDER_PATH, FILE_NAME)
 
 def main():
