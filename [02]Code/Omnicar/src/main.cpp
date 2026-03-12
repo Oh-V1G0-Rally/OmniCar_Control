@@ -25,6 +25,10 @@ Encoder *encoders = robot.enc;
 MotorAutotuner tuner(&robot);
 File logFile; // File per il salvataggio offline
 WebServer server(80); // Oggetto per il web server sulla porta 80
+bool is_boot_test_pending = false;       // Flag per il countdown del test
+unsigned long boot_test_start_millis = 0; // Timestamp inizio countdown
+bool is_pid_test_running = false;         // Stato esecuzione test PID
+unsigned long pid_test_start_time = 0;    // Tempo inizio test PID
 
 
 /******************************************************************************
@@ -45,6 +49,7 @@ void setup() {
   // Inizializza la seriale per il monitoraggio
   Serial.begin(115200);
   //while (!Serial) delay(10); // Attendi l'apertura del monitor seriale
+  serial_channels.init(processSerialPacket, serialWrite);
   
   // --- SPIFFS SETUP ---
   if (!SPIFFS.begin(true)) {
@@ -71,9 +76,15 @@ void setup() {
   robot.init(serialWriteChannel);
 
   Serial.println("Robot initialized.");
-  Serial.println("Starting sequence: (Forward/Backward)");
-  Serial.println("WARNING: Ensure wheels are free to move!");
-  delay(2000); // Pausa di sicurezza prima di partire
+  Serial.println("PID Control Mode Ready.");
+  
+  // Reset signal
+  serialWriteChannel('r', 0);
+
+  // Initialization
+  current_micros = micros();
+  previous_micros = current_micros;
+  last_motor_update_millis = millis();
 }
 
 #pragma region LOOP_MANUALE
@@ -237,38 +248,170 @@ void setup() {
 #pragma endregion
 
 #pragma region LOOP_TUNING
+// // LOOP con MotorAutotuner
+
+// void loop() {
+//   ArduinoOTA.handle();
+//   server.handleClient(); // Gestisce le richieste web in arrivo
+
+//   // 1. GESTIONE TRIGGER TEST (Pulsante BOOT)
+//   handleOfflineTest(); // Controlla pressione tasto (non bloccante)
+
+//   // Gestione Countdown 5 secondi
+//   if (is_boot_test_pending) {
+//     if (millis() - boot_test_start_millis > 5000) {
+//       is_boot_test_pending = false;
+      
+//       // AVVIO TEST E LOGGING
+//       logFile = SPIFFS.open("/log.csv", "w");
+//       if (logFile) {
+//         tuner.setOutput(&logFile);
+        
+//         // --- CONFIGURAZIONE TEST ---
+//         // Qui definisci quale test eseguire al termine del countdown.
+//         // Configurazione: Preheat=0ms, Step1=2000ms, Step2=2000ms
+//         tuner.start(0b1111, 1500, 0, 2000, 2000); 
+//       }
+//     }
+//   }
+
+//   // Se il tuner è attivo, esegui il suo ciclo di update (non-blocking)
+//   if (tuner.isRunning()) {
+//     // Controllo ABORT: Se premi 'x', ferma tutto immediatamente
+//     // (Solo se connesso via seriale)
+//     if (Serial.available() > 0) {
+//       char c = Serial.peek(); // Guarda il carattere senza rimuoverlo subito
+//       if (c == 'x' || c == 'X') {
+//         Serial.read(); // Rimuovi dal buffer
+//         tuner.stop();
+//         return; // Ricomincia il loop
+//       }
+//     }
+//     tuner.update();
+//   }
+//   // Se il tuner ha finito ed era aperto un file di log, chiudilo
+//   else if (logFile) {
+//     logFile.close();
+//     tuner.setOutput(&Serial); // Ripristina output su Serial
+//     Serial.println("\n--- LOG SALVATO SU SPIFFS ---");
+//     Serial.println("Usa il comando 'r' per scaricare i dati.");
+//   }
+//   // Altrimenti attendi comandi seriali
+//   else {
+//     handleSerialInput();
+//   }
+// }
+
+
+#pragma endregion
+
+#pragma region LOOP_PID
 // LOOP con MotorAutotuner
 void loop() {
   ArduinoOTA.handle();
   server.handleClient(); // Gestisce le richieste web in arrivo
 
-  // Se il tuner è attivo, esegui il suo ciclo di update (non-blocking)
-  if (tuner.isRunning()) {
-    // Controllo ABORT: Se premi 'x', ferma tutto immediatamente
-    // (Solo se connesso via seriale)
-    if (Serial.available() > 0) {
-      char c = Serial.peek(); // Guarda il carattere senza rimuoverlo subito
-      if (c == 'x' || c == 'X') {
-        Serial.read(); // Rimuovi dal buffer
-        tuner.stop();
-        return; // Ricomincia il loop
+  // 1. GESTIONE TRIGGER TEST (Pulsante BOOT)
+  handleOfflineTest(); // Controlla pressione tasto (non bloccante)
+
+  // Setpoint
+  const float target_speed = 15.0f; // Target: 15 rad/s (ca. 150 rpm)
+
+  // Gestione Countdown 5 secondi
+  if (is_boot_test_pending) {
+    if (millis() - boot_test_start_millis > 5000) {
+      is_boot_test_pending = false;
+      
+      // AVVIO TEST E LOGGING
+      logFile = SPIFFS.open("/log.csv", "w");
+      if (true) { // Forza l'avvio del test anche se il log fallisse (per debug motori)
+        // Scriviamo l'intestazione CSV manualmente (compatibile con plot_motor_response.py)
+        logFile.println("Time_ms;Ref_RadS;Spd_M0;Spd_M1;Spd_M2;Spd_M3");
+        
+        is_pid_test_running = true;
+        pid_test_start_time = millis();
+        previous_micros = micros(); // Reset timing per il primo ciclo
+        
+        // --- CONFIGURAZIONE SETPOINT PID ---
+        for (int i = 0; i < kNumMot; i++) {
+          robot.setMotorWref(i, target_speed);
+        }
+        Serial.printf("PID Test Started (Ref: %.4f rad/s\n)", target_speed);
       }
     }
-    tuner.update();
   }
-  // Se il tuner ha finito ed era aperto un file di log, chiudilo
+  
+  // 2. ESECUZIONE TEST PID (Se attivo)
+  if (is_pid_test_running) {
+    // Controllo ABORT manuale su seriale (tasto 'x')
+    if (Serial.available() > 0 && (Serial.peek() == 'x' || Serial.peek() == 'X')) {
+        Serial.read();
+        is_pid_test_running = false;
+        robot.stop();
+        return;
+    }
+    
+    current_micros = micros();
+    uint32_t delta = current_micros - previous_micros;
+
+    if (delta > kMotCtrlTimeUs) {
+      previous_micros = current_micros;
+      
+      // Esegue il ciclo di controllo PID del robot
+      robot.update(delta);
+      
+      // Salvataggio dati su file CSV
+      if (logFile) {
+        unsigned long t = millis() - pid_test_start_time;
+        // Log: Tempo;Riferimento;Velocità Reali M0..M3
+        logFile.printf("%lu;%.4f", t, target_speed); 
+        for(int i=0; i<kNumMot; i++) {
+           // Calcolo velocità in rad/s: Ticks * CostanteConversione
+           float speed = (float)robot.enc[i].odo * kEncImp2MotW;
+           logFile.printf(";%.4f", speed);
+        }
+        logFile.println();
+      }
+
+      // Stop automatico dopo 4 secondi
+      if (millis() - pid_test_start_time > 4000) {
+         is_pid_test_running = false;
+         robot.stop();
+      }
+    }
+  }
+  // 3. CHIUSURA LOG (Se test appena finito)
   else if (logFile) {
     logFile.close();
-    tuner.setOutput(&Serial); // Ripristina output su Serial
-    Serial.println("\n--- LOG SALVATO SU SPIFFS ---");
+    Serial.println("\n--- TEST FINITO & LOG SALVATO ---");
     Serial.println("Usa il comando 'r' per scaricare i dati.");
   }
-  // Altrimenti attendi comandi seriali
-  else {
-    handleOfflineTest();
-    handleSerialInput();
-  }
+  // 4. PID CONTROL LOOP (Normale funzionamento remoto)
+  // else {
+  //     serialRead(); // Legge pacchetti binari (Serial Channels) solo se non in test
+
+  //     current_micros = micros();
+  //     uint32_t delta = current_micros - previous_micros;
+
+  //     Serial.println("Secondo IF");
+
+  //     if (delta > kMotCtrlTimeUs) {
+  //       if (kMotCtrlTimeoutEnable) {
+  //         checkMotorsTimeout();
+  //       }
+
+  //       if (!timeout) {
+  //         previous_micros = current_micros;
+          
+  //         // Update PID e invio telemetria
+  //         robot.update(delta);
+  //         robot.send(); 
+  //       }
+  //     }
+  // }
 }
+
+#pragma endregion
 
 
 /******************************************************************************
@@ -404,30 +547,17 @@ void setupWebServer() {
 
 void handleOfflineTest() {
     // --- GESTIONE PULSANTE BOOT (OFFLINE MODE) ---
-    // Se premi il tasto BOOT (GPIO 0) a terra, parte il test
+    // Se premi il tasto BOOT (GPIO 0) a terra, avvia il countdown
     if (digitalRead(0) == LOW) {
-        // Debounce semplice con OTA
-        unsigned long dbStart = millis();
-        while (millis() - dbStart < 1000) {
-            ArduinoOTA.handle();
-            delay(10);
+      // Impedisci riavvio se già in test o in countdown
+      if (!is_boot_test_pending && !tuner.isRunning()) {
+        delay(50); // Debounce minimo
+        if (digitalRead(0) == LOW) {
+          is_boot_test_pending = true;
+          boot_test_start_millis = millis();
+          Serial.println("BOOT Pressed: Avvio test tra 5 secondi...");
         }
-        
-        // Apre il file in scrittura
-        logFile = SPIFFS.open("/log.csv", "w"); // "w" forza la sovrascrittura (cancella il vecchio)
-        if (logFile) {
-            tuner.setOutput(&logFile);
-            
-            // Attesa 5 secondi prima di partire (per allontanarsi)
-            unsigned long waitStart = millis();
-            while (millis() - waitStart < 5000) {
-                ArduinoOTA.handle();
-                delay(10);
-            }
-
-            // Configurazione: Preheat=0ms, Step1=2000ms, Step2=2000ms
-            tuner.start(0b1111, 1500, 0, 2000, 2000); 
-        }
+      }
     }
 }
 

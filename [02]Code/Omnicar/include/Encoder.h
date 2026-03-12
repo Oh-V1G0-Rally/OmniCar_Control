@@ -4,8 +4,8 @@
 #include <Arduino.h>
 
 
-void updateEncodersState(void);
-
+void IRAM_ATTR updateEncodersState(void);
+//void updateEncodersState(void);
 
 class Encoder
 {

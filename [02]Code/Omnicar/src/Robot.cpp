@@ -40,7 +40,8 @@ void Robot::init(void (*serialWriteChannelFunction)(char c, int32_t v))
   // Fix: Replace Timer1 with ESP32 Hardware Timer
   // Timer 0, prescaler 80 (1MHz clock), count up
   encoder_timer = timerBegin(0, 80, true);
-  timerAttachInterrupt(encoder_timer, &updateEncodersState, true);
+  //timerAttachInterrupt(encoder_timer, &updateEncodersState, true);
+  timerAttachInterrupt(encoder_timer, &onEncoderTimer, true); // Usa il wrapper locale IRAM
   timerAlarmWrite(encoder_timer, 50, true); // calls every 50 us (safer than 5us)
   timerAlarmEnable(encoder_timer);
 
@@ -70,13 +71,23 @@ void Robot::update(uint32_t &delta)
   uint8_t i;
   dt = delta;
 
-  // Encoders
-  for (i = 0; i < kNumMot; i++)
-  {
-    enc[i].updateTick();
-  }
+  // // Encoders
+  // for (i = 0; i < kNumMot; i++)
+  // {
+  //   enc[i].updateTick();
+  // }
 
-  updateState(enc[0].odo, enc[1].odo);
+  // updateState(enc[0].odo, enc[1].odo);
+
+  // Salva tick precedenti prima di updateTick()
+    int32_t prev_tick[kNumMot];
+    for (i = 0; i < kNumMot; i++) prev_tick[i] = enc[i].tick;
+
+    for (i = 0; i < kNumMot; i++) enc[i].updateTick();
+
+    int32_t dtick_left  = enc[0].tick - prev_tick[0];
+    int32_t dtick_right = enc[1].tick - prev_tick[1];
+    updateState(dtick_left, dtick_right); // passa delta, non odo assoluto
 
   // Controllers
   for (i = 0; i < kNumMot; i++)
@@ -174,8 +185,8 @@ void Robot::initEnc()
 {
   for (int idx = 0; idx < kNumMot; idx++)
   {
-    pinMode(kMotEncPin[idx][0], INPUT_PULLUP);
-    pinMode(kMotEncPin[idx][1], INPUT_PULLUP);
+    pinMode(kMotEncPinA[idx], INPUT_PULLUP);
+    pinMode(kMotEncPinB[idx], INPUT_PULLUP);
   }
 }
 

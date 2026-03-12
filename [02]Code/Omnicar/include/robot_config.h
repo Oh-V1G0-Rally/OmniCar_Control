@@ -59,9 +59,9 @@ const uint8_t kMotPWMCh[]  = { 0, 1, 2, 3 };     // Canali LEDC indipendenti
 // Nota: 34, 35, 36, 39 richiedono pull-up esterni!
 const uint8_t kMotEncPinA[] = { 16, 5, 19, 22 }; // FL, FR, RL, RR
 const uint8_t kMotEncPinB[] = { 17, 18, 21, 23 }; // FL, FR, RL, RR
-const uint8_t kMotEncPin[kNumMot][2] = {
-  {34, 35}, {36, 39}, {18, 19}, {21, 22}
-};
+// const uint8_t kMotEncPin[kNumMot][2] = {
+//  {16, 17}, {5, 18}, {19, 21}, {22, 23}
+//};
 
 // --- PERIPHERALS ---
 //const uint8_t kI2C_SDA = 21; // Attenzione: condiviso con Encoder RR A se non rimappato
@@ -94,8 +94,8 @@ const unsigned long kMotCtrlLEDOkFreq = 4UL;  //!< heartbeat LED frequency (Hz)
 const unsigned long kMotCtrlLEDOkCount = 1000000UL / kMotCtrlLEDOkFreq / kMotCtrlTimeUs / 2;
 
 // Motor Model (from previous Arduino calibration)
-const float kMotModelKp  = 4.5000f;  //!< Gain (rad.s^-1 / V)
-const float kMotModelTau = 0.1000f;  //!< Time constant (s)
+const float kMotModelKp  = 5.0970f;  //!< Gain (rad.s^-1 / V)
+const float kMotModelTau = 0.0900f;  //!< Time constant (s)
 const float kMotModelLag = 0.0000;   //!< lag lag (s)
 const float kMotVmax     = 11.1f;    //!< Max battery voltage
 constexpr float kMotWmin = -50.0f;  //!< minimum motor angular velocity (rad/s)

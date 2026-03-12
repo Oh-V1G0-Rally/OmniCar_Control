@@ -16,11 +16,9 @@ const int8_t kEncoderTable[16] =
      0, -1,  1,  0
 };
 
+//void updateEncodersState(void)
 
-
-
-
-void updateEncodersState(void)
+void IRAM_ATTR updateEncodersState(void)
 {
   uint8_t b = 0, new_state;
 
