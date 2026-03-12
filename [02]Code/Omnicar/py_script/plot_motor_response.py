@@ -6,13 +6,13 @@ import sys
 import os
 
 # Numero di righe da saltare all'inizio del file PRIMA dell'intestazione
-SKIP_DATA_ROWS = 5
+# SKIP_DATA_ROWS = 5 (Disabilitato per ricerca automatica)
 
 # Variabile per il percorso del file CSV da aprire
 # Esempio Linux: "/media/user/Storage/Desktop_Ale/OmniCar_Control/[02]Code/Omnicar/py_script/csv_test/M0_T1.csv"
 FILE_FOLDER_PATH = '/media/user/Storage/Desktop_Ale/OmniCar_Control/[02]Code/Omnicar/py_script/csv_test/'
 # FILE_NAME = 'MA_NL_T5.csv'
-FILE_NAME = 'TEST_NL_PI.csv'
+FILE_NAME = 'log_serial_20260312_133546.csv'
 FILE_PATH = os.path.join(FILE_FOLDER_PATH, FILE_NAME)
 
 def main():
@@ -37,12 +37,16 @@ def main():
 
     try:
         with open(args.filename, 'r', newline='') as csvfile:
-            # Salta le righe iniziali (es. log di debug prima del CSV)
-            for _ in range(SKIP_DATA_ROWS):
-                csvfile.readline()
-
-            # Leggi la riga dell'intestazione per rilevare il delimitatore
-            header_line = csvfile.readline()
+            # --- RICERCA AUTOMATICA INTESTAZIONE ---
+            # Cerca la prima riga che contiene "Time_ms" invece di saltare righe fisse
+            header_line = ""
+            while True:
+                line = csvfile.readline()
+                if not line: break # Fine file
+                if "Time_ms" in line:
+                    header_line = line
+                    break
+            # ---------------------------------------
 
             if not header_line:
                 print("Errore: Il file non contiene dati validi dopo le righe saltate.")

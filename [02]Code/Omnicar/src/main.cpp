@@ -6,8 +6,8 @@
 #include "robot_config.h"
 #include "Robot.h"
 #include "MotorAutotuner.h"
-#include <WebServer.h>
-#include "SPIFFS.h"
+// #include <WebServer.h>
+// #include "SPIFFS.h"
 
 /******************************************************************************
  * GLOBAL VARIABLES
@@ -23,8 +23,8 @@ channels_t serial_channels;
 Robot robot;
 Encoder *encoders = robot.enc;
 MotorAutotuner tuner(&robot);
-File logFile; // File per il salvataggio offline
-WebServer server(80); // Oggetto per il web server sulla porta 80
+// File logFile; // File per il salvataggio offline
+// WebServer server(80); // Oggetto per il web server sulla porta 80
 bool is_boot_test_pending = false;       // Flag per il countdown del test
 unsigned long boot_test_start_millis = 0; // Timestamp inizio countdown
 bool is_pid_test_running = false;         // Stato esecuzione test PID
@@ -41,10 +41,90 @@ void serialRead();
 void checkMotorsTimeout();
 void setupWiFi();
 void setupOTA();
-void setupWebServer();
+// void setupWebServer();
 void handleOfflineTest();
 void handleSerialInput();
 
+/******************************************************************************
+ * IMPLEMENT
+ ******************************************************************************/
+#pragma region SETUP_LOOP_RASPBERRY_PI
+void setup() {
+  // Built-in LED
+  /*builtin_led_state = LOW;
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, builtin_led_state);*/
+
+  // Robot
+  robot.init(serialWriteChannel);
+
+  // Serial communication
+  Serial.begin(115200);
+  serial_channels.init(processSerialPacket, serialWrite);
+
+  //MY - Debug
+  Serial.println("--- OMNICAR MOTOR TEST START ---");
+  Serial.flush(); // Ensure message is sent before robot.init() potentially crashes
+
+  // Inizializza il robot passando la funzione di callback per la seriale
+  robot.init(serialWriteChannel);
+  Serial.println("Robot initialized.");
+
+  // Reset signal
+  serialWriteChannel('r', 0);
+
+  // Test PWM motors
+  /*robot.setMotorPWM(0, 0);
+  robot.setMotorPWM(1, 0);
+  robot.setMotorPWM(2, 0);
+  robot.setMotorPWM(3, 0);*/
+
+  // Initialization
+  current_micros = micros();
+  previous_micros = current_micros;
+  last_motor_update_millis = millis();
+}
+
+void loop() {
+  //static unsigned long blink_led_decimate = 0;
+  uint32_t delta;
+
+  serialRead();
+
+  current_micros = micros();
+  delta = current_micros - previous_micros;
+  if (delta > kMotCtrlTimeUs) {
+    if (kMotCtrlTimeoutEnable) {
+      checkMotorsTimeout();
+    }
+
+    if (!timeout) {
+      previous_micros = current_micros;
+      
+      // Update and send data
+      robot.update(delta);
+      robot.send();
+
+      // Debug (Serial Monitor)
+      //serialWrite('\n');
+
+      // Blink LED
+      /*blink_led_decimate++;
+      if (blink_led_decimate >= kMotCtrlLEDOkCount) {
+        if (builtin_led_state == LOW) {
+          builtin_led_state = HIGH;
+        } else {
+          builtin_led_state = LOW;
+        }
+        digitalWrite(LED_BUILTIN, builtin_led_state);
+        blink_led_decimate = 0;
+      }*/
+    }
+  }
+}
+#pragma endregion
+
+#pragma region SETUP_ESP32
 void setup() {
   // Inizializza la seriale per il monitoraggio
   Serial.begin(115200);
@@ -52,9 +132,9 @@ void setup() {
   serial_channels.init(processSerialPacket, serialWrite);
   
   // --- SPIFFS SETUP ---
-  if (!SPIFFS.begin(true)) {
-    Serial.println("SPIFFS Mount Failed");
-  }
+  // if (!SPIFFS.begin(true)) {
+  //   Serial.println("SPIFFS Mount Failed");
+  // }
   // Configura il pulsante BOOT (GPIO 0)
   pinMode(0, INPUT_PULLUP);
 
@@ -63,10 +143,7 @@ void setup() {
   setupOTA();
 
   // --- WEB SERVER SETUP ---
-  setupWebServer();
-
-  // Delay to stabilize power and allow serial monitor to connect
-  delay(2000);
+  // setupWebServer();
 
   Serial.println("--- OMNICAR MOTOR TEST START ---");
   Serial.println("Initializing robot hardware...");
@@ -86,6 +163,118 @@ void setup() {
   previous_micros = current_micros;
   last_motor_update_millis = millis();
 }
+#pragma endregion
+
+#pragma region LOOP_PID
+// LOOP con MotorAutotuner
+void loop() {
+  ArduinoOTA.handle();
+  // server.handleClient(); // Gestisce le richieste web in arrivo
+
+  // 1. GESTIONE TRIGGER TEST (Pulsante BOOT)
+  handleOfflineTest(); // Controlla pressione tasto (non bloccante)
+
+  // Setpoint
+  const float target_speed = 20.0f; // Target: 15 rad/s (ca. 150 rpm)
+
+  // Gestione Countdown 5 secondi
+  if (is_boot_test_pending) {
+    if (millis() - boot_test_start_millis > 5000) {
+      is_boot_test_pending = false;
+      
+      // AVVIO TEST E LOGGING
+      // logFile = SPIFFS.open("/log.csv", "w");
+      if (true) { // Condizione sempre vera per avviare il test
+        // Scriviamo l'intestazione CSV manualmente (compatibile con plot_motor_response.py)
+        // logFile.println("Time_ms;Ref_RadS;Spd_M0;Spd_M1;Spd_M2;Spd_M3");
+        Serial.println("Time_ms;Ref_RadS;Spd_M0;Spd_M1;Spd_M2;Spd_M3"); // Invio diretto su seriale
+        
+        is_pid_test_running = true;
+        pid_test_start_time = millis();
+        previous_micros = micros(); // Reset timing per il primo ciclo
+        
+        // --- CONFIGURAZIONE SETPOINT PID ---
+        for (int i = 0; i < kNumMot; i++) {
+          robot.setMotorWref(i, target_speed);
+        }
+        Serial.printf("PID Test Started (Ref: %.4f rad/s\n)", target_speed);
+      }
+    }
+  }
+  
+  // 2. ESECUZIONE TEST PID (Se attivo)
+  if (is_pid_test_running) {
+    // Controllo ABORT manuale su seriale (tasto 'x')
+    if (Serial.available() > 0 && (Serial.peek() == 'x' || Serial.peek() == 'X')) {
+        Serial.read();
+        is_pid_test_running = false;
+        robot.stop();
+        return;
+    }
+    
+    current_micros = micros();
+    uint32_t delta = current_micros - previous_micros;
+
+    if (delta > kMotCtrlTimeUs) {
+      previous_micros = current_micros;
+      
+      // Esegue il ciclo di controllo PID del robot
+      robot.update(delta);
+      
+      // Salvataggio dati su file CSV
+      // if (logFile) {
+      unsigned long t = millis() - pid_test_start_time;
+      // Log: Tempo;Riferimento;Velocità Reali M0..M3
+      Serial.printf("%lu;%.4f", t, target_speed); 
+      for(int i=0; i<kNumMot; i++) {
+          // Calcolo velocità in rad/s: Ticks * CostanteConversione
+          // Usa il tempo dinamico (delta) per loggare la velocità corretta
+          float speed = ((float)robot.enc[i].odo * kEncImp2Rad) / (delta / 1000000.0f);
+          //float speed = ((float)robot.enc[i].odo * kEncImp2MotW*(float)((float)kMotCtrlTimeUs/delta));
+          Serial.printf(";%.4f", speed);
+      }
+      Serial.println();
+      // }
+
+      // Stop automatico dopo 4 secondi
+      if (millis() - pid_test_start_time > 4000) {
+         is_pid_test_running = false;
+         robot.stop();
+      }
+    }
+  }
+  // 3. CHIUSURA LOG (Se test appena finito)
+  // else if (logFile) {
+  //   logFile.close();
+  //   Serial.println("\n--- TEST FINITO (Streaming Completato) ---");
+  //   // Serial.println("Usa il comando 'r' per scaricare i dati.");
+  // }
+  // 4. PID CONTROL LOOP (Normale funzionamento remoto)
+  // else {
+  //     serialRead(); // Legge pacchetti binari (Serial Channels) solo se non in test
+
+  //     current_micros = micros();
+  //     uint32_t delta = current_micros - previous_micros;
+
+  //     Serial.println("Secondo IF");
+
+  //     if (delta > kMotCtrlTimeUs) {
+  //       if (kMotCtrlTimeoutEnable) {
+  //         checkMotorsTimeout();
+  //       }
+
+  //       if (!timeout) {
+  //         previous_micros = current_micros;
+          
+  //         // Update PID e invio telemetria
+  //         robot.update(delta);
+  //         robot.send(); 
+  //       }
+  //     }
+  // }
+}
+
+#pragma endregion
 
 #pragma region LOOP_MANUALE
 // // LOOP MANUALE
@@ -305,115 +494,6 @@ void setup() {
 
 #pragma endregion
 
-#pragma region LOOP_PID
-// LOOP con MotorAutotuner
-void loop() {
-  ArduinoOTA.handle();
-  server.handleClient(); // Gestisce le richieste web in arrivo
-
-  // 1. GESTIONE TRIGGER TEST (Pulsante BOOT)
-  handleOfflineTest(); // Controlla pressione tasto (non bloccante)
-
-  // Setpoint
-  const float target_speed = 15.0f; // Target: 15 rad/s (ca. 150 rpm)
-
-  // Gestione Countdown 5 secondi
-  if (is_boot_test_pending) {
-    if (millis() - boot_test_start_millis > 5000) {
-      is_boot_test_pending = false;
-      
-      // AVVIO TEST E LOGGING
-      logFile = SPIFFS.open("/log.csv", "w");
-      if (true) { // Forza l'avvio del test anche se il log fallisse (per debug motori)
-        // Scriviamo l'intestazione CSV manualmente (compatibile con plot_motor_response.py)
-        logFile.println("Time_ms;Ref_RadS;Spd_M0;Spd_M1;Spd_M2;Spd_M3");
-        
-        is_pid_test_running = true;
-        pid_test_start_time = millis();
-        previous_micros = micros(); // Reset timing per il primo ciclo
-        
-        // --- CONFIGURAZIONE SETPOINT PID ---
-        for (int i = 0; i < kNumMot; i++) {
-          robot.setMotorWref(i, target_speed);
-        }
-        Serial.printf("PID Test Started (Ref: %.4f rad/s\n)", target_speed);
-      }
-    }
-  }
-  
-  // 2. ESECUZIONE TEST PID (Se attivo)
-  if (is_pid_test_running) {
-    // Controllo ABORT manuale su seriale (tasto 'x')
-    if (Serial.available() > 0 && (Serial.peek() == 'x' || Serial.peek() == 'X')) {
-        Serial.read();
-        is_pid_test_running = false;
-        robot.stop();
-        return;
-    }
-    
-    current_micros = micros();
-    uint32_t delta = current_micros - previous_micros;
-
-    if (delta > kMotCtrlTimeUs) {
-      previous_micros = current_micros;
-      
-      // Esegue il ciclo di controllo PID del robot
-      robot.update(delta);
-      
-      // Salvataggio dati su file CSV
-      if (logFile) {
-        unsigned long t = millis() - pid_test_start_time;
-        // Log: Tempo;Riferimento;Velocità Reali M0..M3
-        logFile.printf("%lu;%.4f", t, target_speed); 
-        for(int i=0; i<kNumMot; i++) {
-           // Calcolo velocità in rad/s: Ticks * CostanteConversione
-           float speed = (float)robot.enc[i].odo * kEncImp2MotW;
-           logFile.printf(";%.4f", speed);
-        }
-        logFile.println();
-      }
-
-      // Stop automatico dopo 4 secondi
-      if (millis() - pid_test_start_time > 4000) {
-         is_pid_test_running = false;
-         robot.stop();
-      }
-    }
-  }
-  // 3. CHIUSURA LOG (Se test appena finito)
-  else if (logFile) {
-    logFile.close();
-    Serial.println("\n--- TEST FINITO & LOG SALVATO ---");
-    Serial.println("Usa il comando 'r' per scaricare i dati.");
-  }
-  // 4. PID CONTROL LOOP (Normale funzionamento remoto)
-  // else {
-  //     serialRead(); // Legge pacchetti binari (Serial Channels) solo se non in test
-
-  //     current_micros = micros();
-  //     uint32_t delta = current_micros - previous_micros;
-
-  //     Serial.println("Secondo IF");
-
-  //     if (delta > kMotCtrlTimeUs) {
-  //       if (kMotCtrlTimeoutEnable) {
-  //         checkMotorsTimeout();
-  //       }
-
-  //       if (!timeout) {
-  //         previous_micros = current_micros;
-          
-  //         // Update PID e invio telemetria
-  //         robot.update(delta);
-  //         robot.send(); 
-  //       }
-  //     }
-  // }
-}
-
-#pragma endregion
-
-
 /******************************************************************************
  * FUNCTIONS IMPLEMENTATIONS
  ******************************************************************************/
@@ -511,39 +591,39 @@ void setupOTA() {
   ArduinoOTA.begin();
 }
 
-void setupWebServer() {
-  // Pagina principale che mostra il link per il download
-  server.on("/", HTTP_GET, []() {
-      String html = "<html><head><title>Omnicar Datalogger</title>";
-      html += "<style>body { font-family: sans-serif; text-align: center; padding-top: 50px; } a { font-size: 1.2em; }</style>";
-      html += "</head><body>";
-      html += "<h1>Omnicar Datalogger Wireless</h1>";
-      if (SPIFFS.exists("/log.csv")) {
-          File f = SPIFFS.open("/log.csv", "r");
-          html += "<p>File di log trovato (" + String(f.size()) + " bytes).</p>";
-          html += "<p><a href='/log.csv' download='log.csv'><strong>Scarica log.csv</strong></a></p>";
-          f.close();
-      } else {
-          html += "<p>Nessun file di log trovato. Esegui prima un test con il pulsante BOOT.</p>";
-      }
-      html += "</body></html>";
-      server.send(200, "text/html", html);
-  });
+// void setupWebServer() {
+//   // Pagina principale che mostra il link per il download
+//   server.on("/", HTTP_GET, []() {
+//       String html = "<html><head><title>Omnicar Datalogger</title>";
+//       html += "<style>body { font-family: sans-serif; text-align: center; padding-top: 50px; } a { font-size: 1.2em; }</style>";
+//       html += "</head><body>";
+//       html += "<h1>Omnicar Datalogger Wireless</h1>";
+//       if (SPIFFS.exists("/log.csv")) {
+//           File f = SPIFFS.open("/log.csv", "r");
+//           html += "<p>File di log trovato (" + String(f.size()) + " bytes).</p>";
+//           html += "<p><a href='/log.csv' download='log.csv'><strong>Scarica log.csv</strong></a></p>";
+//           f.close();
+//       } else {
+//           html += "<p>Nessun file di log trovato. Esegui prima un test con il pulsante BOOT.</p>";
+//       }
+//       html += "</body></html>";
+//       server.send(200, "text/html", html);
+//   });
 
-  // Handler per servire il file CSV quando viene richiesto
-  server.on("/log.csv", HTTP_GET, []() {
-      if (SPIFFS.exists("/log.csv")) {
-          File file = SPIFFS.open("/log.csv", "r");
-          server.streamFile(file, "text/csv"); // Invia il file al browser
-          file.close();
-      } else {
-          server.send(404, "text/plain", "File non trovato");
-      }
-  });
+//   // Handler per servire il file CSV quando viene richiesto
+//   server.on("/log.csv", HTTP_GET, []() {
+//       if (SPIFFS.exists("/log.csv")) {
+//           File file = SPIFFS.open("/log.csv", "r");
+//           server.streamFile(file, "text/csv"); // Invia il file al browser
+//           file.close();
+//       } else {
+//           server.send(404, "text/plain", "File non trovato");
+//       }
+//   });
 
-  server.begin();
-  Serial.println("Web server attivo! Accedi da: http://" + WiFi.localIP().toString());
-}
+//   server.begin();
+//   Serial.println("Web server attivo! Accedi da: http://" + WiFi.localIP().toString());
+// }
 
 void handleOfflineTest() {
     // --- GESTIONE PULSANTE BOOT (OFFLINE MODE) ---
@@ -586,16 +666,16 @@ void handleSerialInput() {
       }
       
       // --- COMANDO 'r': Leggi log salvato ---
-      else if (c == 'r' || c == 'R') {
-        Serial.println("\n--- LETTURA LOG DA SPIFFS ---");
-        if (SPIFFS.exists("/log.csv")) {
-            File f = SPIFFS.open("/log.csv", FILE_READ);
-            while (f.available()) Serial.write(f.read());
-            f.close();
-            Serial.println("\n--- FINE FILE ---");
-        } else {
-            Serial.println("Nessun file di log trovato.");
-        }
-      }
+      // else if (c == 'r' || c == 'R') {
+      //   Serial.println("\n--- LETTURA LOG DA SPIFFS ---");
+      //   if (SPIFFS.exists("/log.csv")) {
+      //       File f = SPIFFS.open("/log.csv", FILE_READ);
+      //       while (f.available()) Serial.write(f.read());
+      //       f.close();
+      //       Serial.println("\n--- FINE FILE ---");
+      //   } else {
+      //       Serial.println("Nessun file di log trovato.");
+      //   }
+      // }
     }
 }

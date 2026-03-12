@@ -84,7 +84,7 @@ const bool kMotPWMDeltaMaxEnabled = false;                    // Abilita limitaz
 const int kMotPWMDeltaMax = 1000;                             // Variazione massima PWM per ciclo
 
 // Low Level Controller (Timing)
-const unsigned long kMotCtrlFreq = 100UL;               //!< Loop a 50Hz (minimo ROS)
+const unsigned long kMotCtrlFreq = 50UL;               //!< Loop a 50Hz (minimo ROS)
 const float kMotCtrlTime = 1.0f / kMotCtrlFreq;
 const unsigned long kMotCtrlTimeUs = 1000000UL / kMotCtrlFreq;
 const unsigned long kMotCtrlTimeout = 100UL;           //!< Watchdog (ms)
@@ -102,17 +102,21 @@ constexpr float kMotWmin = -50.0f;  //!< minimum motor angular velocity (rad/s)
 
 
 // PI Gains (Derived via IMC Tuning) 
-const float kMotCtrlTauCl = kMotModelTau / 1.0f;                            //IMC desired time constant for the closed-loop (s))
+const float kMotCtrlTauCl = kMotModelTau / 0.5f;                            //IMC desired time constant for the closed-loop (s))
 const float kMotCtrlKcKp = kMotModelTau / (kMotCtrlTauCl + kMotModelLag);   //IMC tunning: Kc_PI * Kp_plant
 const float kMotCtrlKc    = (kMotModelTau / kMotCtrlTauCl) / kMotModelKp;   //PI proportional gain (V / rad.s^(-1))
 const float kMotCtrlTi    = kMotModelTau;                                   //PI integration time (s)
-const float kMotCtrlKf    = 1.0f / kMotModelKp;                             // Feed-Forward gain
+const float kMotCtrlKf    = 0.0f / kMotModelKp;                             // Feed-Forward gain
 
 /******************************************************************************
  * Conversion Constants
  ******************************************************************************/
 // Ticks to Motor Angular Speed (rad/s)
+// Costante "Legacy" per tempo fisso (potrebbe essere rimossa in futuro)
 const float kEncImp2MotW = (2.0f * PI * 1000000.0f) / (kMotCtrlTimeUs * kMotNgear * kMotEncRes);
+
+// NUOVA: Conversione Ticks -> Radianti (Indipendente dal tempo)
+const float kEncImp2Rad = (2.0f * PI) / (kMotNgear * kMotEncRes);
 
 // Volts to PWM (0..1023)
 const float kMotV2MotPWM = kMotPWMMax * 1.0 / kRobotBattVnom;
