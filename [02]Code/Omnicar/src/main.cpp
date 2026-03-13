@@ -229,8 +229,8 @@ void loop() {
       for(int i=0; i<kNumMot; i++) {
           // Calcolo velocità in rad/s: Ticks * CostanteConversione
           // Usa il tempo dinamico (delta) per loggare la velocità corretta
-          float speed = ((float)robot.enc[i].odo * kEncImp2Rad) / (delta / 1000000.0f);
-          //float speed = ((float)robot.enc[i].odo * kEncImp2MotW*(float)((float)kMotCtrlTimeUs/delta));
+          // float speed = ((float)robot.enc[i].odo * kEncImp2Rad) / (delta / 1000000.0f);
+          float speed = ((float)robot.enc[i].odo * kEncImp2MotW);
           Serial.printf(";%.4f", speed);
       }
       Serial.println();

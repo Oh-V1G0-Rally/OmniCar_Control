@@ -11,8 +11,8 @@ import os
 # Variabile per il percorso del file CSV da aprire
 # Esempio Linux: "/media/user/Storage/Desktop_Ale/OmniCar_Control/[02]Code/Omnicar/py_script/csv_test/M0_T1.csv"
 FILE_FOLDER_PATH = '/media/user/Storage/Desktop_Ale/OmniCar_Control/[02]Code/Omnicar/py_script/csv_test/'
-# FILE_NAME = 'MA_NL_T5.csv'
-FILE_NAME = 'log_serial_20260312_133546.csv'
+# FILE_NAME = 'PID_2.csv'
+FILE_NAME = 'log_serial_20260312_142913.csv'
 FILE_PATH = os.path.join(FILE_FOLDER_PATH, FILE_NAME)
 
 def main():
@@ -63,6 +63,12 @@ def main():
             # Parsiamo l'intestazione dalla riga appena letta
             headers = next(csv.reader([header_line], delimiter=detected_delimiter))
             print(f"Intestazioni rilevate: {headers}")
+            
+            # Rilevamento formato (Standard 6 col vs Legacy 3 col)
+            is_legacy_single = False
+            if len(headers) == 3:
+                print("-> Rilevato formato Legacy (Singolo Motore). Adattamento in corso...")
+                is_legacy_single = True
 
             # Crea il reader per il resto del file (parte dalla posizione corrente)
             reader = csv.reader(csvfile, delimiter=detected_delimiter)
@@ -71,13 +77,22 @@ def main():
             for i, row in enumerate(reader):
                 if not row: continue # Salta righe vuote
                 try:
-                    # Struttura attesa: Time_ms;Ref_Rads;Spd_M0;Spd_M1;Spd_M2;Spd_M3
-                    t = float(row[0].replace(',', '.'))
-                    ref_rads = float(row[1].replace(',', '.'))
-                    m0 = float(row[2].replace(',', '.'))
-                    m1 = float(row[3].replace(',', '.'))
-                    m2 = float(row[4].replace(',', '.'))
-                    m3 = float(row[5].replace(',', '.'))
+                    if is_legacy_single:
+                        # Formato Legacy: Time_ms,PWM_Ref,Speed_rad_s
+                        if len(row) < 3: continue
+                        t = float(row[0].replace(',', '.'))
+                        ref_rads = float(row[1].replace(',', '.'))
+                        m0 = float(row[2].replace(',', '.'))
+                        m1 = m2 = m3 = 0.0 # Altri motori a 0
+                    else:
+                        # Struttura Standard: Time_ms;Ref_Rads;Spd_M0;Spd_M1;Spd_M2;Spd_M3
+                        if len(row) < 6: continue
+                        t = float(row[0].replace(',', '.'))
+                        ref_rads = float(row[1].replace(',', '.'))
+                        m0 = float(row[2].replace(',', '.'))
+                        m1 = float(row[3].replace(',', '.'))
+                        m2 = float(row[4].replace(',', '.'))
+                        m3 = float(row[5].replace(',', '.'))
                     
                     times.append(t)
                     pwms.append(ref_rads)
@@ -86,7 +101,7 @@ def main():
                     motor_speeds[2].append(m2)
                     motor_speeds[3].append(m3)
 
-                except ValueError:
+                except (ValueError, IndexError):
                     # Ignora righe che non contengono numeri validi (es. fine file o errori)
                     continue
 
@@ -120,7 +135,7 @@ def main():
         # Asse Y2: ref_rads Reference
         ax2 = ax1.twinx()
         color_ref = 'black'
-        ax2.set_ylabel('Reference (Rad/s)', color=color_ref)
+        ax2.set_ylabel('Reference (rad/s)', color=color_ref)
         ax2.plot(times, pwms, '--', color=color_ref, alpha=0.5, label='Reference')
         ax2.tick_params(axis='y', labelcolor=color_ref)
         
@@ -176,7 +191,7 @@ def main():
         
         # Asse Y2 per ref_rads
         ax2 = ax1.twinx()
-        ax2.set_ylabel('Rad/s Reference', color='k')
+        ax2.set_ylabel('rad/s Reference', color='k')
         ax2.plot(times, pwms, 'k--', linewidth=1, alpha=0.5, label='rad/s Ref')
         ax2.legend(loc='upper right')
         
