@@ -48,19 +48,23 @@ void handleSerialInput();
 /******************************************************************************
  * IMPLEMENT
  ******************************************************************************/
-#pragma region SETUP_LOOP_RASPBERRY_PI
+#pragma region SETUP_LOOP_RASPBERRY_PI - TEST
 void setup() {
   // Built-in LED
   /*builtin_led_state = LOW;
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, builtin_led_state);*/
 
-  // Robot
-  robot.init(serialWriteChannel);
-
   // Serial communication
   Serial.begin(115200);
   serial_channels.init(processSerialPacket, serialWrite);
+
+  // --- WIFI & OTA SETUP ---
+  // È FONDAMENTALE connettersi al WiFi PRIMA di inizializzare OTA
+  setupWiFi();
+  setupOTA();
+
+  Serial.println("WiFi configured.");
 
   //MY - Debug
   Serial.println("--- OMNICAR MOTOR TEST START ---");
@@ -73,12 +77,6 @@ void setup() {
   // Reset signal
   serialWriteChannel('r', 0);
 
-  // Test PWM motors
-  /*robot.setMotorPWM(0, 0);
-  robot.setMotorPWM(1, 0);
-  robot.setMotorPWM(2, 0);
-  robot.setMotorPWM(3, 0);*/
-
   // Initialization
   current_micros = micros();
   previous_micros = current_micros;
@@ -86,193 +84,269 @@ void setup() {
 }
 
 void loop() {
-  //static unsigned long blink_led_decimate = 0;
-  uint32_t delta;
+    // La gestione degli aggiornamenti OTA deve essere eseguita il più frequentemente possibile.
+    ArduinoOTA.handle();
 
-  serialRead();
+    current_micros = micros();
+    uint32_t delta;
 
-  current_micros = micros();
-  delta = current_micros - previous_micros;
-  if (delta > kMotCtrlTimeUs) {
-    if (kMotCtrlTimeoutEnable) {
-      checkMotorsTimeout();
-    }
+    serialRead();
 
-    if (!timeout) {
-      previous_micros = current_micros;
-      
-      // Update and send data
-      robot.update(delta);
-      robot.send();
+    current_micros = micros();
+    delta = current_micros - previous_micros;
 
-      // Debug (Serial Monitor)
-      //serialWrite('\n');
+    // 1. Controllo della temporizzazione basato su kMotCtrlTime (es. 20ms = 50Hz)
+    if (delta>= kMotCtrlTimeUs) {
+        previous_micros = current_micros;
 
-      // Blink LED
-      /*blink_led_decimate++;
-      if (blink_led_decimate >= kMotCtrlLEDOkCount) {
-        if (builtin_led_state == LOW) {
-          builtin_led_state = HIGH;
-        } else {
-          builtin_led_state = LOW;
+        // Disabilitato forzatamente per permettere il test manuale (senza comandi ROS in entrata)
+        if (false && kMotCtrlTimeoutEnable) {
+          checkMotorsTimeout();
         }
-        digitalWrite(LED_BUILTIN, builtin_led_state);
-        blink_led_decimate = 0;
-      }*/
-    }
-  }
+
+        if (!timeout) {
+          robot.update(delta);
+
+          // robot.enc[i].odo contiene i tick accumulati dall'ultima lettura
+          for (int i = 0; i < kNumMot; i++) {
+              serial_channels.send('0' + i, robot.enc[i].odo);
+              //Serial.printf("0" + i, robot.enc[i].odo);
+          }
+        }
+      }
+    // Gestione comandi in entrata (da ROS verso ESP32)
+    handleSerialInput();
+    // La chiamata a ArduinoOTA.handle() è stata spostata all'inizio del loop per garantirne l'esecuzione.
 }
+#pragma endregion
+
+#pragma region SETUP_LOOP_RASPBERRY_PI - STD
+// void setup() {
+//   // Built-in LED
+//   /*builtin_led_state = LOW;
+//   pinMode(LED_BUILTIN, OUTPUT);
+//   digitalWrite(LED_BUILTIN, builtin_led_state);*/
+
+//   // Robot
+//   robot.init(serialWriteChannel);
+
+//   // Serial communication
+//   Serial.begin(115200);
+//   serial_channels.init(processSerialPacket, serialWrite);
+
+//   //MY - Debug
+//   Serial.println("--- OMNICAR MOTOR TEST START ---");
+//   Serial.flush(); // Ensure message is sent before robot.init() potentially crashes
+
+//   // Inizializza il robot passando la funzione di callback per la seriale
+//   robot.init(serialWriteChannel);
+//   Serial.println("Robot initialized.");
+
+//   // Reset signal
+//   serialWriteChannel('r', 0);
+
+//   // Test PWM motors
+//   /*robot.setMotorPWM(0, 0);
+//   robot.setMotorPWM(1, 0);
+//   robot.setMotorPWM(2, 0);
+//   robot.setMotorPWM(3, 0);*/
+
+//   // Initialization
+//   current_micros = micros();
+//   previous_micros = current_micros;
+//   last_motor_update_millis = millis();
+// }
+
+// void loop() {
+//   //static unsigned long blink_led_decimate = 0;
+//   uint32_t delta;
+
+//   serialRead();
+
+//   current_micros = micros();
+//   delta = current_micros - previous_micros;
+//   if (delta > kMotCtrlTimeUs) {
+//     if (kMotCtrlTimeoutEnable) {
+//       checkMotorsTimeout();
+//     }
+
+//     if (!timeout) {
+//       previous_micros = current_micros;
+      
+//       // Update and send data
+//       robot.update(delta);
+//       robot.send();
+
+//       // Debug (Serial Monitor)
+//       //serialWrite('\n');
+
+//       // Blink LED
+//       /*blink_led_decimate++;
+//       if (blink_led_decimate >= kMotCtrlLEDOkCount) {
+//         if (builtin_led_state == LOW) {
+//           builtin_led_state = HIGH;
+//         } else {
+//           builtin_led_state = LOW;
+//         }
+//         digitalWrite(LED_BUILTIN, builtin_led_state);
+//         blink_led_decimate = 0;
+//       }*/
+//     }
+//   }
+
+//     ArduinoOTA.handle();
+// }
 #pragma endregion
 
 #pragma region SETUP_ESP32
-void setup() {
-  // Inizializza la seriale per il monitoraggio
-  Serial.begin(115200);
-  //while (!Serial) delay(10); // Attendi l'apertura del monitor seriale
-  serial_channels.init(processSerialPacket, serialWrite);
+// void setup() {
+//   // Inizializza la seriale per il monitoraggio
+//   Serial.begin(115200);
+//   //while (!Serial) delay(10); // Attendi l'apertura del monitor seriale
+//   serial_channels.init(processSerialPacket, serialWrite);
   
-  // --- SPIFFS SETUP ---
-  // if (!SPIFFS.begin(true)) {
-  //   Serial.println("SPIFFS Mount Failed");
-  // }
-  // Configura il pulsante BOOT (GPIO 0)
-  pinMode(0, INPUT_PULLUP);
+//   // --- SPIFFS SETUP ---
+//   // if (!SPIFFS.begin(true)) {
+//   //   Serial.println("SPIFFS Mount Failed");
+//   // }
+//   // Configura il pulsante BOOT (GPIO 0)
+//   pinMode(0, INPUT_PULLUP);
 
-  // --- WIFI & OTA SETUP ---
-  setupWiFi();
-  setupOTA();
+//   // --- WIFI & OTA SETUP ---
+//   setupWiFi();
+//   setupOTA();
 
-  // --- WEB SERVER SETUP ---
-  // setupWebServer();
+//   // --- WEB SERVER SETUP ---
+//   // setupWebServer();
 
-  Serial.println("--- OMNICAR MOTOR TEST START ---");
-  Serial.println("Initializing robot hardware...");
-  Serial.flush(); // Ensure message is sent before robot.init() potentially crashes
+//   Serial.println("--- OMNICAR MOTOR TEST START ---");
+//   Serial.println("Initializing robot hardware...");
+//   Serial.flush(); // Ensure message is sent before robot.init() potentially crashes
 
-  // Inizializza il robot passando la funzione di callback per la seriale
-  robot.init(serialWriteChannel);
+//   // Inizializza il robot passando la funzione di callback per la seriale
+//   robot.init(serialWriteChannel);
 
-  Serial.println("Robot initialized.");
-  Serial.println("PID Control Mode Ready.");
+//   Serial.println("Robot initialized.");
+//   Serial.println("PID Control Mode Ready.");
   
-  // Reset signal
-  serialWriteChannel('r', 0);
+//   // Reset signal
+//   serialWriteChannel('r', 0);
 
-  // Initialization
-  current_micros = micros();
-  previous_micros = current_micros;
-  last_motor_update_millis = millis();
-}
+//   // Initialization
+//   current_micros = micros();
+//   previous_micros = current_micros;
+//   last_motor_update_millis = millis();
+// }
 #pragma endregion
 
 #pragma region LOOP_PID
-// LOOP con MotorAutotuner
-void loop() {
-  ArduinoOTA.handle();
-  // server.handleClient(); // Gestisce le richieste web in arrivo
+// // LOOP con MotorAutotuner
+// void loop() {
+//   ArduinoOTA.handle();
+//   // server.handleClient(); // Gestisce le richieste web in arrivo
 
-  // 1. GESTIONE TRIGGER TEST (Pulsante BOOT)
-  handleOfflineTest(); // Controlla pressione tasto (non bloccante)
+//   // 1. GESTIONE TRIGGER TEST (Pulsante BOOT)
+//   handleOfflineTest(); // Controlla pressione tasto (non bloccante)
 
-  // Setpoint
-  const float target_speed = 20.0f; // Target: 15 rad/s (ca. 150 rpm)
+//   // Setpoint
+//   const float target_speed = 20.0f; // Target: 15 rad/s (ca. 150 rpm)
 
-  // Gestione Countdown 5 secondi
-  if (is_boot_test_pending) {
-    if (millis() - boot_test_start_millis > 5000) {
-      is_boot_test_pending = false;
+//   // Gestione Countdown 5 secondi
+//   if (is_boot_test_pending) {
+//     if (millis() - boot_test_start_millis > 5000) {
+//       is_boot_test_pending = false;
       
-      // AVVIO TEST E LOGGING
-      // logFile = SPIFFS.open("/log.csv", "w");
-      if (true) { // Condizione sempre vera per avviare il test
-        // Scriviamo l'intestazione CSV manualmente (compatibile con plot_motor_response.py)
-        // logFile.println("Time_ms;Ref_RadS;Spd_M0;Spd_M1;Spd_M2;Spd_M3");
-        Serial.println("Time_ms;Ref_RadS;Spd_M0;Spd_M1;Spd_M2;Spd_M3"); // Invio diretto su seriale
+//       // AVVIO TEST E LOGGING
+//       // logFile = SPIFFS.open("/log.csv", "w");
+//       if (true) { // Condizione sempre vera per avviare il test
+//         // Scriviamo l'intestazione CSV manualmente (compatibile con plot_motor_response.py)
+//         // logFile.println("Time_ms;Ref_RadS;Spd_M0;Spd_M1;Spd_M2;Spd_M3");
+//         Serial.println("Time_ms;Ref_RadS;Spd_M0;Spd_M1;Spd_M2;Spd_M3"); // Invio diretto su seriale
         
-        is_pid_test_running = true;
-        pid_test_start_time = millis();
-        previous_micros = micros(); // Reset timing per il primo ciclo
+//         is_pid_test_running = true;
+//         pid_test_start_time = millis();
+//         previous_micros = micros(); // Reset timing per il primo ciclo
         
-        // --- CONFIGURAZIONE SETPOINT PID ---
-        for (int i = 0; i < kNumMot; i++) {
-          robot.setMotorWref(i, target_speed);
-        }
-        Serial.printf("PID Test Started (Ref: %.4f rad/s\n)", target_speed);
-      }
-    }
-  }
+//         // --- CONFIGURAZIONE SETPOINT PID ---
+//         for (int i = 0; i < kNumMot; i++) {
+//           robot.setMotorWref(i, target_speed);
+//         }
+//         Serial.printf("PID Test Started (Ref: %.4f rad/s\n)", target_speed);
+//       }
+//     }
+//   }
   
-  // 2. ESECUZIONE TEST PID (Se attivo)
-  if (is_pid_test_running) {
-    // Controllo ABORT manuale su seriale (tasto 'x')
-    if (Serial.available() > 0 && (Serial.peek() == 'x' || Serial.peek() == 'X')) {
-        Serial.read();
-        is_pid_test_running = false;
-        robot.stop();
-        return;
-    }
+//   // 2. ESECUZIONE TEST PID (Se attivo)
+//   if (is_pid_test_running) {
+//     // Controllo ABORT manuale su seriale (tasto 'x')
+//     if (Serial.available() > 0 && (Serial.peek() == 'x' || Serial.peek() == 'X')) {
+//         Serial.read();
+//         is_pid_test_running = false;
+//         robot.stop();
+//         return;
+//     }
     
-    current_micros = micros();
-    uint32_t delta = current_micros - previous_micros;
+//     current_micros = micros();
+//     uint32_t delta = current_micros - previous_micros;
 
-    if (delta > kMotCtrlTimeUs) {
-      previous_micros = current_micros;
+//     if (delta > kMotCtrlTimeUs) {
+//       previous_micros = current_micros;
       
-      // Esegue il ciclo di controllo PID del robot
-      robot.update(delta);
+//       // Esegue il ciclo di controllo PID del robot
+//       robot.update(delta);
       
-      // Salvataggio dati su file CSV
-      // if (logFile) {
-      unsigned long t = millis() - pid_test_start_time;
-      // Log: Tempo;Riferimento;Velocità Reali M0..M3
-      Serial.printf("%lu;%.4f", t, target_speed); 
-      for(int i=0; i<kNumMot; i++) {
-          // Calcolo velocità in rad/s: Ticks * CostanteConversione
-          // Usa il tempo dinamico (delta) per loggare la velocità corretta
-          // float speed = ((float)robot.enc[i].odo * kEncImp2Rad) / (delta / 1000000.0f);
-          float speed = ((float)robot.enc[i].odo * kEncImp2MotW);
-          Serial.printf(";%.4f", speed);
-      }
-      Serial.println();
-      // }
+//       // Salvataggio dati su file CSV
+//       // if (logFile) {
+//       unsigned long t = millis() - pid_test_start_time;
+//       // Log: Tempo;Riferimento;Velocità Reali M0..M3
+//       Serial.printf("%lu;%.4f", t, target_speed); 
+//       for(int i=0; i<kNumMot; i++) {
+//           // Calcolo velocità in rad/s: Ticks * CostanteConversione
+//           // Usa il tempo dinamico (delta) per loggare la velocità corretta
+//           // float speed = ((float)robot.enc[i].odo * kEncImp2Rad) / (delta / 1000000.0f);
+//           float speed = ((float)robot.enc[i].odo * kEncImp2MotW);
+//           Serial.printf(";%.4f", speed);
+//       }
+//       Serial.println();
+//       // }
 
-      // Stop automatico dopo 4 secondi
-      if (millis() - pid_test_start_time > 4000) {
-         is_pid_test_running = false;
-         robot.stop();
-      }
-    }
-  }
-  // 3. CHIUSURA LOG (Se test appena finito)
-  // else if (logFile) {
-  //   logFile.close();
-  //   Serial.println("\n--- TEST FINITO (Streaming Completato) ---");
-  //   // Serial.println("Usa il comando 'r' per scaricare i dati.");
-  // }
-  // 4. PID CONTROL LOOP (Normale funzionamento remoto)
-  // else {
-  //     serialRead(); // Legge pacchetti binari (Serial Channels) solo se non in test
+//       // Stop automatico dopo 4 secondi
+//       if (millis() - pid_test_start_time > 4000) {
+//          is_pid_test_running = false;
+//          robot.stop();
+//       }
+//     }
+//   }
+//   // 3. CHIUSURA LOG (Se test appena finito)
+//   // else if (logFile) {
+//   //   logFile.close();
+//   //   Serial.println("\n--- TEST FINITO (Streaming Completato) ---");
+//   //   // Serial.println("Usa il comando 'r' per scaricare i dati.");
+//   // }
+//   // 4. PID CONTROL LOOP (Normale funzionamento remoto)
+//   // else {
+//   //     serialRead(); // Legge pacchetti binari (Serial Channels) solo se non in test
 
-  //     current_micros = micros();
-  //     uint32_t delta = current_micros - previous_micros;
+//   //     current_micros = micros();
+//   //     uint32_t delta = current_micros - previous_micros;
 
-  //     Serial.println("Secondo IF");
+//   //     Serial.println("Secondo IF");
 
-  //     if (delta > kMotCtrlTimeUs) {
-  //       if (kMotCtrlTimeoutEnable) {
-  //         checkMotorsTimeout();
-  //       }
+//   //     if (delta > kMotCtrlTimeUs) {
+//   //       if (kMotCtrlTimeoutEnable) {
+//   //         checkMotorsTimeout();
+//   //       }
 
-  //       if (!timeout) {
-  //         previous_micros = current_micros;
+//   //       if (!timeout) {
+//   //         previous_micros = current_micros;
           
-  //         // Update PID e invio telemetria
-  //         robot.update(delta);
-  //         robot.send(); 
-  //       }
-  //     }
-  // }
-}
+//   //         // Update PID e invio telemetria
+//   //         robot.update(delta);
+//   //         robot.send(); 
+//   //       }
+//   //     }
+//   // }
+// }
 
 #pragma endregion
 
@@ -649,13 +723,19 @@ void handleSerialInput() {
         tuner.setOutput(&Serial); // Assicura output su Serial
         Serial.println("\n--- SETUP AUTOTUNER ---");
         Serial.print("Inserisci Maschera Motori (Binario, es. 0001=M0, 0101=M0+M2, 1111=All): ");
-        while (!Serial.available()) delay(10);
+        while (!Serial.available()) {
+          ArduinoOTA.handle(); // Permette OTA anche durante l'attesa
+          delay(10);
+        }
         String maskStr = Serial.readStringUntil('\n');
         maskStr.trim(); // Rimuove spazi e newline
         int mask = strtol(maskStr.c_str(), NULL, 2); // Converte da stringa binaria a int
         
         Serial.print("\nPWM step (es. 4095): ");
-        while (!Serial.available()) delay(10);
+        while (!Serial.available()) {
+          ArduinoOTA.handle(); // Permette OTA anche durante l'attesa
+          delay(10);
+        }
         int pwm = Serial.parseInt();
 
         // Pulisci buffer
