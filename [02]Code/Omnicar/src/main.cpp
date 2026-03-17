@@ -48,23 +48,19 @@ void handleSerialInput();
 /******************************************************************************
  * IMPLEMENT
  ******************************************************************************/
-#pragma region SETUP_LOOP_RASPBERRY_PI - TEST
+#pragma region SETUP_LOOP_RASPBERRY_PI - STD
 void setup() {
   // Built-in LED
   /*builtin_led_state = LOW;
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, builtin_led_state);*/
 
+  // Robot
+  robot.init(serialWriteChannel);
+
   // Serial communication
   Serial.begin(115200);
   serial_channels.init(processSerialPacket, serialWrite);
-
-  // --- WIFI & OTA SETUP ---
-  // È FONDAMENTALE connettersi al WiFi PRIMA di inizializzare OTA
-  setupWiFi();
-  setupOTA();
-
-  Serial.println("WiFi configured.");
 
   //MY - Debug
   Serial.println("--- OMNICAR MOTOR TEST START ---");
@@ -77,6 +73,12 @@ void setup() {
   // Reset signal
   serialWriteChannel('r', 0);
 
+  // Test PWM motors
+  /*robot.setMotorPWM(0, 0);
+  robot.setMotorPWM(1, 0);
+  robot.setMotorPWM(2, 0);
+  robot.setMotorPWM(3, 0);*/
+
   // Initialization
   current_micros = micros();
   previous_micros = current_micros;
@@ -84,55 +86,63 @@ void setup() {
 }
 
 void loop() {
-    // La gestione degli aggiornamenti OTA deve essere eseguita il più frequentemente possibile.
+  //static unsigned long blink_led_decimate = 0;
+  uint32_t delta;
+
+  serialRead();
+
+  current_micros = micros();
+  delta = current_micros - previous_micros;
+  if (delta > kMotCtrlTimeUs) {
+    if (kMotCtrlTimeoutEnable) {
+      checkMotorsTimeout();
+    }
+
+    if (!timeout) {
+      previous_micros = current_micros;
+      
+      // Update and send data
+      robot.update(delta);
+      robot.send();
+
+      // Debug (Serial Monitor)
+      //serialWrite('\n');
+
+      // Blink LED
+      /*blink_led_decimate++;
+      if (blink_led_decimate >= kMotCtrlLEDOkCount) {
+        if (builtin_led_state == LOW) {
+          builtin_led_state = HIGH;
+        } else {
+          builtin_led_state = LOW;
+        }
+        digitalWrite(LED_BUILTIN, builtin_led_state);
+        blink_led_decimate = 0;
+      }*/
+    }
+  }
+
     ArduinoOTA.handle();
-
-    current_micros = micros();
-    uint32_t delta;
-
-    serialRead();
-
-    current_micros = micros();
-    delta = current_micros - previous_micros;
-
-    // 1. Controllo della temporizzazione basato su kMotCtrlTime (es. 20ms = 50Hz)
-    if (delta>= kMotCtrlTimeUs) {
-        previous_micros = current_micros;
-
-        // Disabilitato forzatamente per permettere il test manuale (senza comandi ROS in entrata)
-        if (false && kMotCtrlTimeoutEnable) {
-          checkMotorsTimeout();
-        }
-
-        if (!timeout) {
-          robot.update(delta);
-
-          // robot.enc[i].odo contiene i tick accumulati dall'ultima lettura
-          for (int i = 0; i < kNumMot; i++) {
-              serial_channels.send('0' + i, robot.enc[i].odo);
-              //Serial.printf("0" + i, robot.enc[i].odo);
-          }
-        }
-      }
-    // Gestione comandi in entrata (da ROS verso ESP32)
-    handleSerialInput();
-    // La chiamata a ArduinoOTA.handle() è stata spostata all'inizio del loop per garantirne l'esecuzione.
 }
 #pragma endregion
 
-#pragma region SETUP_LOOP_RASPBERRY_PI - STD
+#pragma region SETUP_LOOP_RASPBERRY_PI - TEST
 // void setup() {
 //   // Built-in LED
 //   /*builtin_led_state = LOW;
 //   pinMode(LED_BUILTIN, OUTPUT);
 //   digitalWrite(LED_BUILTIN, builtin_led_state);*/
 
-//   // Robot
-//   robot.init(serialWriteChannel);
-
 //   // Serial communication
 //   Serial.begin(115200);
 //   serial_channels.init(processSerialPacket, serialWrite);
+
+//   // --- WIFI & OTA SETUP ---
+//   // È FONDAMENTALE connettersi al WiFi PRIMA di inizializzare OTA
+//   setupWiFi();
+//   setupOTA();
+
+//   Serial.println("WiFi configured.");
 
 //   //MY - Debug
 //   Serial.println("--- OMNICAR MOTOR TEST START ---");
@@ -145,12 +155,6 @@ void loop() {
 //   // Reset signal
 //   serialWriteChannel('r', 0);
 
-//   // Test PWM motors
-//   /*robot.setMotorPWM(0, 0);
-//   robot.setMotorPWM(1, 0);
-//   robot.setMotorPWM(2, 0);
-//   robot.setMotorPWM(3, 0);*/
-
 //   // Initialization
 //   current_micros = micros();
 //   previous_micros = current_micros;
@@ -158,43 +162,39 @@ void loop() {
 // }
 
 // void loop() {
-//   //static unsigned long blink_led_decimate = 0;
-//   uint32_t delta;
-
-//   serialRead();
-
-//   current_micros = micros();
-//   delta = current_micros - previous_micros;
-//   if (delta > kMotCtrlTimeUs) {
-//     if (kMotCtrlTimeoutEnable) {
-//       checkMotorsTimeout();
-//     }
-
-//     if (!timeout) {
-//       previous_micros = current_micros;
-      
-//       // Update and send data
-//       robot.update(delta);
-//       robot.send();
-
-//       // Debug (Serial Monitor)
-//       //serialWrite('\n');
-
-//       // Blink LED
-//       /*blink_led_decimate++;
-//       if (blink_led_decimate >= kMotCtrlLEDOkCount) {
-//         if (builtin_led_state == LOW) {
-//           builtin_led_state = HIGH;
-//         } else {
-//           builtin_led_state = LOW;
-//         }
-//         digitalWrite(LED_BUILTIN, builtin_led_state);
-//         blink_led_decimate = 0;
-//       }*/
-//     }
-//   }
-
+//     // La gestione degli aggiornamenti OTA deve essere eseguita il più frequentemente possibile.
 //     ArduinoOTA.handle();
+
+//     current_micros = micros();
+//     uint32_t delta;
+
+//     serialRead();
+
+//     current_micros = micros();
+//     delta = current_micros - previous_micros;
+
+//     // 1. Controllo della temporizzazione basato su kMotCtrlTime (es. 20ms = 50Hz)
+//     if (delta>= kMotCtrlTimeUs) {
+//         previous_micros = current_micros;
+
+//         // Disabilitato forzatamente per permettere il test manuale (senza comandi ROS in entrata)
+//         if (false && kMotCtrlTimeoutEnable) {
+//           checkMotorsTimeout();
+//         }
+
+//         if (!timeout) {
+//           robot.update(delta);
+
+//           // robot.enc[i].odo contiene i tick accumulati dall'ultima lettura
+//           for (int i = 0; i < kNumMot; i++) {
+//               serial_channels.send('0' + i, robot.enc[i].odo);
+//               //Serial.printf("0" + i, robot.enc[i].odo);
+//           }
+//         }
+//       }
+//     // Gestione comandi in entrata (da ROS verso ESP32)
+//     handleSerialInput();
+//     // La chiamata a ArduinoOTA.handle() è stata spostata all'inizio del loop per garantirne l'esecuzione.
 // }
 #pragma endregion
 
