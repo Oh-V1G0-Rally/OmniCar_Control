@@ -90,6 +90,9 @@ void Motor::reset() {
 void Motor::setW() {
   w = 2 * M_PI * enc_ticks_delta * kMotCtrlFreq /
       (gear_reduction * encoder_res);
+      
+      printf("MOTORE DEBUG: Delta: %d, Res: %f, Gear: %f, W: %f\n", 
+              enc_ticks_delta, encoder_res, gear_reduction, w);
 }
 
 Robot5dpoRatf::Robot5dpoRatf() : serial_async_(nullptr) {
@@ -230,6 +233,12 @@ void Robot5dpoRatf::rcvSerialData(const char *data, unsigned int len) {
           mtx_.lock();
           switch_state = (serial_cfg_->channel_s == 0);
           mtx_.unlock();
+        //case 'z':
+          //sendSerialData();
+          //if (run) {
+          //  run();
+          //}
+          //break;
 
         default:
           break;
@@ -249,8 +258,8 @@ void Robot5dpoRatf::sendSerialData() {
    mtx_.unlock();
   
    // DEBUG: Stampa a video la stringa che stiamo per inviare
-  std::string msgG = SendChannel('G');
-   printf("INVIO SERIALE: %s\n", msgG.c_str());
+   // std::string msgG = SendChannel('G');
+   // printf("INVIO SERIALE: %s\n", msgG.c_str());
 
    serial_async_->writeString(SendChannel('G'));
    serial_async_->writeString(SendChannel('H'));
