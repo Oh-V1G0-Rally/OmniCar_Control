@@ -1,0 +1,8 @@
+prefix=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/devel
+
+Name: sdpo_ros_interfaces_hw
+Description: Description of sdpo_ros_interfaces_hw
+Version: 0.0.0
+Cflags: -I/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/devel/include
+Libs: -L${prefix}/lib 
+Requires: message_runtime

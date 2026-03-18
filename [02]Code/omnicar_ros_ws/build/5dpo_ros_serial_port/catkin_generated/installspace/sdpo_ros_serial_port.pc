@@ -1,0 +1,8 @@
+prefix=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/install
+
+Name: sdpo_ros_serial_port
+Description: Description of sdpo_ros_serial_port
+Version: 0.0.0
+Cflags: -I${prefix}/include -I/usr/include
+Libs: -L${prefix}/lib -lsdpo_ros_serial_port /usr/lib/arm-linux-gnueabihf/libboost_date_time.so /usr/lib/arm-linux-gnueabihf/libboost_system.so
+Requires: 

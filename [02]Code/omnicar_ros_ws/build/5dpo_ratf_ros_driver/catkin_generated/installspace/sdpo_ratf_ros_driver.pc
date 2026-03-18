@@ -1,0 +1,8 @@
+prefix=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/install
+
+Name: sdpo_ratf_ros_driver
+Description: Description of sdpo_ratf_ros_driver
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib 
+Requires: roscpp message_generation message_runtime sdpo_ros_interfaces_hw sdpo_ros_serial_port serial_communication_channels std_msgs std_srvs

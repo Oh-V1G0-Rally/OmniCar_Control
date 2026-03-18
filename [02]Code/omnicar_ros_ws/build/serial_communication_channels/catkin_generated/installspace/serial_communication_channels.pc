@@ -1,0 +1,8 @@
+prefix=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/install
+
+Name: serial_communication_channels
+Description: Description of serial_communication_channels
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib -lserial_communication_channels
+Requires: 

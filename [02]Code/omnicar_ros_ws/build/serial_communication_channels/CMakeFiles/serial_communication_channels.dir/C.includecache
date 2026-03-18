@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/src/serial_communication_channels/include/serial_communication_channels/serial_communication_channels.h
+stdint.h
+-
+
+/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/src/serial_communication_channels/src/serial_communication_channels.c
+serial_communication_channels/serial_communication_channels.h
+/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/src/serial_communication_channels/src/serial_communication_channels/serial_communication_channels.h
+stdlib.h
+-
+

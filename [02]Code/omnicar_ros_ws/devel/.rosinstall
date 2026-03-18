@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/devel/setup.sh

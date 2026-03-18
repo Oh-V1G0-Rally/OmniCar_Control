@@ -1,0 +1,1 @@
+/usr/bin/cc -fPIC   -shared -Wl,-soname,libserial_communication_channels.so -o /home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/devel/lib/libserial_communication_channels.so CMakeFiles/serial_communication_channels.dir/src/serial_communication_channels.c.o 
