@@ -45,6 +45,11 @@ constexpr char kMQTTServerIP[] = "192.168.31.144";  //!< MQTT server IP (PC)
 /******************************************************************************
  * Pinout Mapping - OMNICAR ESP32
  ******************************************************************************/
+ 
+// Fallback per schede ESP32 che non definiscono LED_BUILTIN nativamente
+#ifndef LED_BUILTIN
+#define LED_BUILTIN 2
+#endif
 
 // --- MOTORS (PWM & DIRECTION) ---
 // Utilizziamo l'API LEDC di ESP32 per PWM ad alta risoluzione

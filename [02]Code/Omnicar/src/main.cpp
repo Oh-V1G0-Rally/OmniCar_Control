@@ -18,7 +18,7 @@ unsigned long current_micros = 0, previous_micros = 0;
 unsigned long last_motor_update_millis = 0;
 bool timeout = false;
 channels_t serial_channels;
-//uint8_t builtin_led_state;
+uint8_t builtin_led_state;
 
 Robot robot;
 Encoder *encoders = robot.enc;
@@ -50,10 +50,11 @@ void handleSerialInput();
  ******************************************************************************/
 #pragma region SETUP_LOOP_RASPBERRY_PI - STD
 void setup() {
+  //DEBUG
   // Built-in LED
-  /*builtin_led_state = LOW;
+  builtin_led_state = LOW;
   pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, builtin_led_state);*/
+  digitalWrite(LED_BUILTIN, builtin_led_state);
 
   // Robot
   robot.init(serialWriteChannel);
@@ -61,17 +62,18 @@ void setup() {
   // Serial communication
   Serial.begin(115200);
   serial_channels.init(processSerialPacket, serialWrite);
+  serialWriteChannel('r', 0);
+
+  setupWiFi();
+  setupOTA();
 
   //MY - Debug
-  Serial.println("--- OMNICAR MOTOR TEST START ---");
-  Serial.flush(); // Ensure message is sent before robot.init() potentially crashes
+  //Serial.println("--- OMNICAR MOTOR TEST START ---");
+  //Serial.flush(); // Ensure message is sent before robot.init() potentially crashes
 
   // Inizializza il robot passando la funzione di callback per la seriale
-  robot.init(serialWriteChannel);
-  Serial.println("Robot initialized.");
+  //Serial.println("Robot initialized.");
 
-  // Reset signal
-  serialWriteChannel('r', 0);
 
   // Test PWM motors
   /*robot.setMotorPWM(0, 0);
@@ -86,15 +88,18 @@ void setup() {
 }
 
 void loop() {
-  //static unsigned long blink_led_decimate = 0;
+  ArduinoOTA.handle();
+
+  static unsigned long blink_led_decimate = 0;
   uint32_t delta;
 
-  serialRead();
+  //serialRead();
 
   current_micros = micros();
   delta = current_micros - previous_micros;
+ 
   if (delta > kMotCtrlTimeUs) {
-    if (kMotCtrlTimeoutEnable) {
+    if (false) {
       checkMotorsTimeout();
     }
 
@@ -109,7 +114,7 @@ void loop() {
       //serialWrite('\n');
 
       // Blink LED
-      /*blink_led_decimate++;
+      blink_led_decimate++;
       if (blink_led_decimate >= kMotCtrlLEDOkCount) {
         if (builtin_led_state == LOW) {
           builtin_led_state = HIGH;
@@ -118,11 +123,10 @@ void loop() {
         }
         digitalWrite(LED_BUILTIN, builtin_led_state);
         blink_led_decimate = 0;
-      }*/
+      }
     }
   }
 
-    ArduinoOTA.handle();
 }
 #pragma endregion
 
@@ -572,6 +576,9 @@ void loop() {
  * FUNCTIONS IMPLEMENTATIONS
  ******************************************************************************/
 void processSerialPacket(char channel, uint32_t value, channels_t& obj) {
+
+  if(channel == 'G') Serial.println("DEBUG: Ricevuto G!");
+  
   uint8_t mot_i;
   int16_t pwm;
 
@@ -633,10 +640,11 @@ void checkMotorsTimeout() {
     timeout = true;
 
     robot.stop();
-    // digitalWrite(kRobotActSolenoidPin, 0);
+    //digitalWrite(kRobotActSolenoidPin, 0);
 
-    /*builtin_led_state = LOW;
-    digitalWrite(LED_BUILTIN, builtin_led_state);*/
+    // DEBUG
+    // builtin_led_state = LOW;
+    // digitalWrite(LED_BUILTIN, builtin_led_state);
 
   } else {
     if (timeout) {
@@ -734,7 +742,7 @@ void handleSerialInput() {
         Serial.print("\nPWM step (es. 4095): ");
         while (!Serial.available()) {
           ArduinoOTA.handle(); // Permette OTA anche durante l'attesa
-          delay(10);
+          //delay(10);
         }
         int pwm = Serial.parseInt();
 
