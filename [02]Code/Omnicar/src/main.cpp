@@ -93,7 +93,7 @@ void loop() {
   static unsigned long blink_led_decimate = 0;
   uint32_t delta;
 
-  //serialRead();
+  serialRead();
 
   current_micros = micros();
   delta = current_micros - previous_micros;

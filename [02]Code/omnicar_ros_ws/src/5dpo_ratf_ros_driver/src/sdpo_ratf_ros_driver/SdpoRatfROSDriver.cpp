@@ -48,8 +48,8 @@ bool SdpoRatfROSDriver::readParam() {
   ros::NodeHandle nh_private("~");
 
   for (auto& m : rob_.mot) {
-    nh_private.param<double>("encoder_res", m.encoder_res, 48.0);
-    nh_private.param<double>("gear_reduction", m.gear_reduction, 64.0);
+    nh_private.param<double>("encoder_res", m.encoder_res, 64.0);
+    nh_private.param<double>("gear_reduction", m.gear_reduction, 18.75);
   }
   nh_private.param<std::string>("serial_port_name", serial_port_name_,
                                 "/dev/ttyACM0");
