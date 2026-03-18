@@ -50,11 +50,11 @@ void handleSerialInput();
  ******************************************************************************/
 #pragma region SETUP_LOOP_RASPBERRY_PI - STD
 void setup() {
-  //DEBUG
-  // Built-in LED
-  builtin_led_state = LOW;
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, builtin_led_state);
+  // //DEBUG
+  // // Spegnimento forzato del Built-in LED
+  // builtin_led_state = LOW;
+  // pinMode(LED_BUILTIN, OUTPUT);
+  // digitalWrite(LED_BUILTIN, builtin_led_state);
 
   // Robot
   robot.init(serialWriteChannel);
@@ -90,7 +90,7 @@ void setup() {
 void loop() {
   ArduinoOTA.handle();
 
-  static unsigned long blink_led_decimate = 0;
+  // static unsigned long blink_led_decimate = 0;
   uint32_t delta;
 
   serialRead();
@@ -113,17 +113,17 @@ void loop() {
       // Debug (Serial Monitor)
       //serialWrite('\n');
 
-      // Blink LED
-      blink_led_decimate++;
-      if (blink_led_decimate >= kMotCtrlLEDOkCount) {
-        if (builtin_led_state == LOW) {
-          builtin_led_state = HIGH;
-        } else {
-          builtin_led_state = LOW;
-        }
-        digitalWrite(LED_BUILTIN, builtin_led_state);
-        blink_led_decimate = 0;
-      }
+      // // Blink LED
+      // blink_led_decimate++;
+      // if (blink_led_decimate >= kMotCtrlLEDOkCount) {
+      //   if (builtin_led_state == LOW) {
+      //     builtin_led_state = HIGH;
+      //   } else {
+      //     builtin_led_state = LOW;
+      //   }
+      //   digitalWrite(LED_BUILTIN, builtin_led_state);
+      //   blink_led_decimate = 0;
+      // }
     }
   }
 
@@ -577,7 +577,7 @@ void loop() {
  ******************************************************************************/
 void processSerialPacket(char channel, uint32_t value, channels_t& obj) {
 
-  if(channel == 'G') Serial.println("DEBUG: Ricevuto G!");
+  //if(channel == 'G') Serial.println("DEBUG: Ricevuto G!");
   
   uint8_t mot_i;
   int16_t pwm;

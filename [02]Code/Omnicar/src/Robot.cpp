@@ -42,7 +42,7 @@ void Robot::init(void (*serialWriteChannelFunction)(char c, int32_t v))
   encoder_timer = timerBegin(0, 80, true);
   //timerAttachInterrupt(encoder_timer, &updateEncodersState, true);
   timerAttachInterrupt(encoder_timer, &onEncoderTimer, true); // Usa il wrapper locale IRAM
-  timerAlarmWrite(encoder_timer, 50, true); // calls every 50 us (safer than 5us)
+  timerAlarmWrite(encoder_timer, 100, true); // calls every 50 us (safer than 5us)
   timerAlarmEnable(encoder_timer);
 
   // Motors
