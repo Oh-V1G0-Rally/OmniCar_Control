@@ -1,0 +1,13 @@
+<launch>
+  <arg name="robot_id" default="unnamed_robot"/>
+
+  <include file="$(find sdpo_ratf_ros_driver)/launch/sdpo_ratf_ros_driver.launch">
+    <arg name="robot_id" value="$(arg robot_id)"/>
+  </include>
+
+  <node pkg="sdpo_ratf_ros_driver" type="timed_test.py" name="timed_motor_test" output="screen" />
+
+  <node pkg="rostopic" type="rostopic" name="encoder_echo" 
+        args="echo /$(arg robot_id)/motors_encoders" 
+        output="screen" />
+</launch>

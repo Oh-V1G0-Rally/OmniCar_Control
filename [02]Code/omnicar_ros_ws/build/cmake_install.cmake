@@ -135,6 +135,8 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build/5dpo_ros_serial_port/cmake_install.cmake")
   include("/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build/serial_communication_channels/cmake_install.cmake")
   include("/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build/5dpo_ratf_ros_driver/cmake_install.cmake")
+  include("/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build/5dpo_driver_omnijoy/cmake_install.cmake")
+  include("/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build/5dpo_ros_odom/cmake_install.cmake")
 
 endif()
 

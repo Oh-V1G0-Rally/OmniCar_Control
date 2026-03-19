@@ -91,8 +91,8 @@ void Motor::setW() {
   w = 2 * M_PI * enc_ticks_delta * kMotCtrlFreq /
       (gear_reduction * encoder_res);
       
-      printf("MOTORE DEBUG: Delta: %d, Res: %f, Gear: %f, W: %f\n", 
-              enc_ticks_delta, encoder_res, gear_reduction, w);
+      // printf("MOTORE DEBUG: Delta: %d, Res: %f, Gear: %f, W: %f\n", 
+      //        enc_ticks_delta, encoder_res, gear_reduction, w);
 }
 
 Robot5dpoRatf::Robot5dpoRatf() : serial_async_(nullptr) {

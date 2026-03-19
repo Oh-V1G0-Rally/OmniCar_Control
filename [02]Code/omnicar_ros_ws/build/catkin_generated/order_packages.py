@@ -2,4 +2,4 @@
 source_root_dir = '/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/src'
 whitelisted_packages = ''.split(';') if '' != '' else []
 blacklisted_packages = ''.split(';') if '' != '' else []
-underlay_workspaces = '/home/sdpo-ratf/ros_catkin_ws/install_isolated'.split(';') if '/home/sdpo-ratf/ros_catkin_ws/install_isolated' != '' else []
+underlay_workspaces = '/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/devel;/home/sdpo-ratf/drivers_ws/install_isolated;/home/sdpo-ratf/ros_catkin_ws/install_isolated'.split(';') if '/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/devel;/home/sdpo-ratf/drivers_ws/install_isolated;/home/sdpo-ratf/ros_catkin_ws/install_isolated' != '' else []

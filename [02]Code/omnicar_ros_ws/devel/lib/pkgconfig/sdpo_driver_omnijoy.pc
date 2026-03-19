@@ -1,0 +1,8 @@
+prefix=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/devel
+
+Name: sdpo_driver_omnijoy
+Description: Description of sdpo_driver_omnijoy
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
