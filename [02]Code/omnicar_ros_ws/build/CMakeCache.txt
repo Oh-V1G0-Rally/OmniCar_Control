@@ -427,6 +427,9 @@ gennodejs_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/gennodej
 //The directory containing a CMake configuration file for genpy.
 genpy_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/genpy/cmake
 
+//The directory containing a CMake configuration file for geometry_msgs.
+geometry_msgs_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/geometry_msgs/cmake
+
 //Value Computed by CMake
 gmock_BINARY_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build/gtest/googlemock
 
@@ -473,6 +476,9 @@ gtest_hide_internal_symbols:BOOL=OFF
 //Dependencies for the target
 gtest_main_LIB_DEPENDS:STATIC=general;gtest;
 
+//The directory containing a CMake configuration file for joy.
+joy_DIR:PATH=joy_DIR-NOTFOUND
+
 //Path to a library.
 lib:FILEPATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/lib/libxmlrpcpp.so
 
@@ -504,6 +510,12 @@ rospy_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/rospy/cmake
 rostime_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/rostime/cmake
 
 //Value Computed by CMake
+sdpo_driver_omnijoy_BINARY_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build/5dpo_driver_omnijoy
+
+//Value Computed by CMake
+sdpo_driver_omnijoy_SOURCE_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/src/5dpo_driver_omnijoy
+
+//Value Computed by CMake
 sdpo_ratf_ros_driver_BINARY_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build/5dpo_ratf_ros_driver
 
 //Value Computed by CMake
@@ -512,8 +524,7 @@ sdpo_ratf_ros_driver_SOURCE_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/
 //Value Computed by CMake
 sdpo_ros_interfaces_hw_BINARY_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build/5dpo_ros_interfaces/5dpo_ros_interfaces_hw
 
-//The directory containing a CMake configuration file for sdpo_ros_interfaces_hw.
-sdpo_ros_interfaces_hw_DIR:PATH=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/devel/share/sdpo_ros_interfaces_hw/cmake
+sdpo_ros_interfaces_hw_DIR:PATH=
 
 //Value Computed by CMake
 sdpo_ros_interfaces_hw_SOURCE_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/src/5dpo_ros_interfaces/5dpo_ros_interfaces_hw
@@ -709,7 +720,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=8
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=4
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP
