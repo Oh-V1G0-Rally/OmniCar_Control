@@ -1,2 +1,2 @@
-5dpo_driver_omnijoy:5dpo_ratf_ros_driver:5dpo_ros_interfaces/5dpo_ros_interfaces_hw:5dpo_ros_odom:5dpo_ros_serial_port:serial_communication_channels
+5dpo_driver_omnijoy:5dpo_ratf_ros_driver:5dpo_ros_interfaces/5dpo_ros_interfaces_hw:5dpo_ros_odom:5dpo_ros_serial_port:ldlidar_stl_ros:serial_communication_channels
 -DCATKIN_DEVEL_PREFIX=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/devel -DCMAKE_INSTALL_PREFIX=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/install -G Unix Makefiles

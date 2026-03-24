@@ -485,6 +485,12 @@ gtest_main_LIB_DEPENDS:STATIC=general;gtest;
 //The directory containing a CMake configuration file for joy.
 joy_DIR:PATH=/home/sdpo-ratf/drivers_ws/install_isolated/share/joy/cmake
 
+//Value Computed by CMake
+ldlidar_stl_ros_BINARY_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build/ldlidar_stl_ros
+
+//Value Computed by CMake
+ldlidar_stl_ros_SOURCE_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/src/ldlidar_stl_ros
+
 //Path to a library.
 lib:FILEPATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/lib/libtf2.so
 
@@ -760,7 +766,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=10
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=11
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP

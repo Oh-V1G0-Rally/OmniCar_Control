@@ -7,3 +7,7 @@
 # new environment variables
 
 # modified environment variables
+export LD_LIBRARY_PATH='/home/sdpo-ratf/drivers_ws/install_isolated/lib:/home/sdpo-ratf/ros_catkin_ws/install_isolated/lib'
+export PKG_CONFIG_PATH='/home/sdpo-ratf/drivers_ws/install_isolated/lib/pkgconfig:/home/sdpo-ratf/ros_catkin_ws/install_isolated/lib/pkgconfig'
+export PWD='/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build'
+export PYTHONPATH='/home/sdpo-ratf/ros_catkin_ws/install_isolated/lib/python3/dist-packages'
