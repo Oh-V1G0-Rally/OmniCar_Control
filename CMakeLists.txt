@@ -125,41 +125,65 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/include/core/
-  ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/include/dataprocess/
-  ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/include/filter/
-  ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/include/logger/
-  ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/include/networkcom/
-  ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/include/serialcom/
   ${catkin_INCLUDE_DIRS}
+  ldlidar_driver/src
+  include
+  ldlidar_driver/include
+  ldlidar_driver/include/core        # <--- Aggiungi queste sottocartelle
+  ldlidar_driver/include/dataprocess
+  ldlidar_driver/include/filter
+  ldlidar_driver/include/logger
+  ldlidar_driver/include/networkcom
+  ldlidar_driver/include/serialcom
+  src/publish_node
+  #${CMAKE_CURRENT_SOURCE_DIR}/include
+  #${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/include/core/
+  #${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/include/dataprocess/
+  #${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/include/filter/
+  #${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/include/logger/
+  #${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/include/networkcom/
+  #${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/include/serialcom/
 )
 
-file(GLOB  LDLIDAR_DRI_CORE ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/src/core/*.cpp)
-file(GLOB  LDLIDAR_DRI_DATARPC ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/src/dataprocess/*.cpp)
-file(GLOB  LDLIDAR_DRI_FILTER ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/src/filter/*.cpp)
-file(GLOB  LDLIDAR_DRI_LOGGER ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/src/logger/*.cpp)
-file(GLOB  LDLIDAR_DRI_NETWORK ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/src/networkcom/*.cpp)
-file(GLOB  LDLIDAR_DRI_SERIAL ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/src/serialcom/*.cpp)
-
-file(GLOB  MAIN_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/publish_node/*.cpp)
-file(GLOB  LISTEN_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/listen_node/*.cpp)
+set(SDK_SOURCES
+  ldlidar_driver/src/core/ldlidar_driver.cpp
+  ldlidar_driver/src/dataprocess/lipkg.cpp
+  ldlidar_driver/src/filter/tofbf.cpp
+  ldlidar_driver/src/logger/log_module.cpp
+  ldlidar_driver/src/networkcom/network_socket_interface_linux.cpp
+  ldlidar_driver/src/serialcom/serial_interface_linux.cpp
+  #src/listen_node/listen_node.cpp
+  #src/publish_node/main.cpp
+)
 
 add_executable(${PROJECT_NAME}_node  
-  ${MAIN_SRC} 
-  ${LDLIDAR_DRI_CORE} 
-  ${LDLIDAR_DRI_DATARPC} 
-  ${LDLIDAR_DRI_FILTER} 
-  ${LDLIDAR_DRI_LOGGER} 
-  ${LDLIDAR_DRI_NETWORK} 
-  ${LDLIDAR_DRI_SERIAL}
+  src/publish_node/main.cpp
+  ${SDK_SOURCES}         
 )
-target_link_libraries(${PROJECT_NAME}_node pthread ${catkin_LIBRARIES})
+
+add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES})
 
 add_executable(${PROJECT_NAME}_listen_node  
-  ${LISTEN_SRC}
+  src/listen_node/listen_node.cpp
 )
-target_link_libraries(${PROJECT_NAME}_listen_node  ${catkin_LIBRARIES})
+
+add_dependencies(${PROJECT_NAME}_listen_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME}_listen_node ${catkin_LIBRARIES})
+
+#file(GLOB  LDLIDAR_DRI_CORE ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/src/core/*.cpp)
+#file(GLOB  LDLIDAR_DRI_DATARPC ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/src/dataprocess/*.cpp)
+#file(GLOB  LDLIDAR_DRI_FILTER ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/src/filter/*.cpp)
+#file(GLOB  LDLIDAR_DRI_LOGGER ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/src/logger/*.cpp)
+#file(GLOB  LDLIDAR_DRI_NETWORK ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/src/networkcom/*.cpp)
+#file(GLOB  LDLIDAR_DRI_SERIAL ${CMAKE_CURRENT_SOURCE_DIR}/ldlidar_driver/src/serialcom/*.cpp)
+
+#file(GLOB  MAIN_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/publish_node/*.cpp)
+#file(GLOB  LISTEN_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/listen_node/*.cpp)
+
+#file(GLOB_RECURSE SDK_SOURCES 
+#  "ldlidar_driver/src/*.cpp"
+#)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
