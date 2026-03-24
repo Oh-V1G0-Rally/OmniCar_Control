@@ -20,6 +20,18 @@ BUILD_GMOCK:BOOL=ON
 //Build dynamically-linked binaries
 BUILD_SHARED_LIBS:BOOL=ON
 
+//Boost atomic library (debug)
+Boost_ATOMIC_LIBRARY_DEBUG:FILEPATH=/usr/lib/arm-linux-gnueabihf/libboost_atomic.so
+
+//Boost atomic library (release)
+Boost_ATOMIC_LIBRARY_RELEASE:FILEPATH=/usr/lib/arm-linux-gnueabihf/libboost_atomic.so
+
+//Boost chrono library (debug)
+Boost_CHRONO_LIBRARY_DEBUG:FILEPATH=/usr/lib/arm-linux-gnueabihf/libboost_chrono.so
+
+//Boost chrono library (release)
+Boost_CHRONO_LIBRARY_RELEASE:FILEPATH=/usr/lib/arm-linux-gnueabihf/libboost_chrono.so
+
 //Boost date_time library (debug)
 Boost_DATE_TIME_LIBRARY_DEBUG:FILEPATH=/usr/lib/arm-linux-gnueabihf/libboost_date_time.so
 
@@ -43,6 +55,12 @@ Boost_SYSTEM_LIBRARY_DEBUG:FILEPATH=/usr/lib/arm-linux-gnueabihf/libboost_system
 
 //Boost system library (release)
 Boost_SYSTEM_LIBRARY_RELEASE:FILEPATH=/usr/lib/arm-linux-gnueabihf/libboost_system.so
+
+//Boost thread library (debug)
+Boost_THREAD_LIBRARY_DEBUG:FILEPATH=/usr/lib/arm-linux-gnueabihf/libboost_thread.so
+
+//Boost thread library (release)
+Boost_THREAD_LIBRARY_RELEASE:FILEPATH=/usr/lib/arm-linux-gnueabihf/libboost_thread.so
 
 //List of ';' separated packages to exclude
 CATKIN_BLACKLIST_PACKAGES:STRING=
@@ -330,6 +348,9 @@ EMPY_EXECUTABLE:FILEPATH=EMPY_EXECUTABLE-NOTFOUND
 //Empy script
 EMPY_SCRIPT:STRING=/usr/lib/python3/dist-packages/em.py
 
+//The directory containing a CMake configuration file for Eigen3.
+Eigen3_DIR:PATH=/usr/lib/cmake/eigen3
+
 //The directory containing a CMake configuration file for GMock.
 GMock_DIR:PATH=GMock_DIR-NOTFOUND
 
@@ -360,6 +381,9 @@ LSB_RELEASE_EXECUTABLE:FILEPATH=/usr/bin/lsb_release
 
 //Path to a program.
 NOSETESTS:FILEPATH=/usr/bin/nosetests3
+
+//pkg-config executable
+PKG_CONFIG_EXECUTABLE:FILEPATH=/usr/bin/pkg-config
 
 //Path to a program.
 PYTHON_EXECUTABLE:FILEPATH=/usr/bin/python3
@@ -414,6 +438,9 @@ catkin_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/catkin/cmak
 
 //The directory containing a CMake configuration file for cpp_common.
 cpp_common_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/cpp_common/cmake
+
+//The directory containing a CMake configuration file for dynamic_reconfigure.
+dynamic_reconfigure_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/dynamic_reconfigure/cmake
 
 //The directory containing a CMake configuration file for gencpp.
 gencpp_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/gencpp/cmake
@@ -506,6 +533,15 @@ message_runtime_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/me
 //The directory containing a CMake configuration file for nav_msgs.
 nav_msgs_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/nav_msgs/cmake
 
+//Path to a library.
+pkgcfg_lib_BFL_orocos-bfl:FILEPATH=/usr/lib/arm-linux-gnueabihf/liborocos-bfl.so
+
+//Value Computed by CMake
+robot_pose_ekf_BINARY_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build/robot_pose_ekf
+
+//Value Computed by CMake
+robot_pose_ekf_SOURCE_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/src/robot_pose_ekf
+
 //The directory containing a CMake configuration file for rosconsole.
 rosconsole_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/rosconsole/cmake
 
@@ -527,6 +563,9 @@ rosgraph_msgs_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/rosg
 //The directory containing a CMake configuration file for rospy.
 rospy_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/rospy/cmake
 
+//The directory containing a CMake configuration file for rostest.
+rostest_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/rostest/cmake
+
 //The directory containing a CMake configuration file for rostime.
 rostime_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/rostime/cmake
 
@@ -541,6 +580,12 @@ sdpo_ratf_ros_driver_BINARY_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/
 
 //Value Computed by CMake
 sdpo_ratf_ros_driver_SOURCE_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/src/5dpo_ratf_ros_driver
+
+//Value Computed by CMake
+sdpo_ratf_ros_localization_BINARY_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build/5dpo_ratf_ros_localization
+
+//Value Computed by CMake
+sdpo_ratf_ros_localization_SOURCE_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/src/5dpo_ratf_ros_localization
 
 //Value Computed by CMake
 sdpo_ros_interfaces_hw_BINARY_DIR:STATIC=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build/5dpo_ros_interfaces/5dpo_ros_interfaces_hw
@@ -599,6 +644,9 @@ tf2_ros_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/tf2_ros/cm
 //The directory containing a CMake configuration file for tf.
 tf_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/tf/cmake
 
+//The directory containing a CMake configuration file for visualization_msgs.
+visualization_msgs_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/visualization_msgs/cmake
+
 //The directory containing a CMake configuration file for xmlrpcpp.
 xmlrpcpp_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/xmlrpcpp/cmake
 
@@ -607,6 +655,49 @@ xmlrpcpp_DIR:PATH=/home/sdpo-ratf/ros_catkin_ws/install_isolated/share/xmlrpcpp/
 # INTERNAL cache entries
 ########################
 
+BFL_CFLAGS:INTERNAL=-I/usr/include/bfl;-I
+BFL_CFLAGS_I:INTERNAL=
+BFL_CFLAGS_OTHER:INTERNAL=
+BFL_FOUND:INTERNAL=1
+BFL_INCLUDEDIR:INTERNAL=/usr/include/bfl
+BFL_INCLUDE_DIRS:INTERNAL=/usr/include/bfl
+BFL_LDFLAGS:INTERNAL=-lorocos-bfl
+BFL_LDFLAGS_OTHER:INTERNAL=
+BFL_LIBDIR:INTERNAL=/usr/lib
+BFL_LIBRARIES:INTERNAL=orocos-bfl
+BFL_LIBRARY_DIRS:INTERNAL=
+BFL_LIBS:INTERNAL=
+BFL_LIBS_L:INTERNAL=
+BFL_LIBS_OTHER:INTERNAL=
+BFL_LIBS_PATHS:INTERNAL=
+BFL_MODULE_NAME:INTERNAL=orocos-bfl
+BFL_PREFIX:INTERNAL=/usr
+BFL_STATIC_CFLAGS:INTERNAL=-I/usr/include/bfl;-I
+BFL_STATIC_CFLAGS_I:INTERNAL=
+BFL_STATIC_CFLAGS_OTHER:INTERNAL=
+BFL_STATIC_INCLUDE_DIRS:INTERNAL=/usr/include/bfl
+BFL_STATIC_LDFLAGS:INTERNAL=-lorocos-bfl
+BFL_STATIC_LDFLAGS_OTHER:INTERNAL=
+BFL_STATIC_LIBDIR:INTERNAL=
+BFL_STATIC_LIBRARIES:INTERNAL=orocos-bfl
+BFL_STATIC_LIBRARY_DIRS:INTERNAL=
+BFL_STATIC_LIBS:INTERNAL=
+BFL_STATIC_LIBS_L:INTERNAL=
+BFL_STATIC_LIBS_OTHER:INTERNAL=
+BFL_STATIC_LIBS_PATHS:INTERNAL=
+BFL_VERSION:INTERNAL=0.8.0
+BFL_orocos-bfl_INCLUDEDIR:INTERNAL=
+BFL_orocos-bfl_LIBDIR:INTERNAL=
+BFL_orocos-bfl_PREFIX:INTERNAL=
+BFL_orocos-bfl_VERSION:INTERNAL=
+//ADVANCED property for variable: Boost_ATOMIC_LIBRARY_DEBUG
+Boost_ATOMIC_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: Boost_ATOMIC_LIBRARY_RELEASE
+Boost_ATOMIC_LIBRARY_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: Boost_CHRONO_LIBRARY_DEBUG
+Boost_CHRONO_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: Boost_CHRONO_LIBRARY_RELEASE
+Boost_CHRONO_LIBRARY_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: Boost_DATE_TIME_LIBRARY_DEBUG
 Boost_DATE_TIME_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: Boost_DATE_TIME_LIBRARY_RELEASE
@@ -623,6 +714,10 @@ Boost_LIBRARY_DIR_RELEASE-ADVANCED:INTERNAL=1
 Boost_SYSTEM_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: Boost_SYSTEM_LIBRARY_RELEASE
 Boost_SYSTEM_LIBRARY_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: Boost_THREAD_LIBRARY_DEBUG
+Boost_THREAD_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: Boost_THREAD_LIBRARY_RELEASE
+Boost_THREAD_LIBRARY_RELEASE-ADVANCED:INTERNAL=1
 //catkin environment
 CATKIN_ENV:INTERNAL=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build/catkin_generated/env_cached.sh
 CATKIN_TEST_RESULTS_DIR:INTERNAL=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/build/test_results
@@ -766,7 +861,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=11
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=13
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP
@@ -810,9 +905,11 @@ CMAKE_UNAME:INTERNAL=/usr/bin/uname
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 //Details about finding Boost
-FIND_PACKAGE_MESSAGE_DETAILS_Boost:INTERNAL=[/usr/include][cfound components: date_time system ][v1.67.0()]
+FIND_PACKAGE_MESSAGE_DETAILS_Boost:INTERNAL=[/usr/include][cfound components: thread chrono system date_time atomic ][v1.67.0()]
 //Details about finding PY_em
 FIND_PACKAGE_MESSAGE_DETAILS_PY_em:INTERNAL=[/usr/lib/python3/dist-packages/em.py][v()]
+//Details about finding PkgConfig
+FIND_PACKAGE_MESSAGE_DETAILS_PkgConfig:INTERNAL=[/usr/bin/pkg-config][v0.29()]
 //Details about finding PythonInterp
 FIND_PACKAGE_MESSAGE_DETAILS_PythonInterp:INTERNAL=[/usr/bin/python3][v3.7.3()]
 //Details about finding Threads
@@ -837,6 +934,8 @@ GTEST_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
 GTEST_MAIN_LIBRARY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: GTEST_MAIN_LIBRARY_DEBUG
 GTEST_MAIN_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: PKG_CONFIG_EXECUTABLE
+PKG_CONFIG_EXECUTABLE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: PYTHON_EXECUTABLE
 PYTHON_EXECUTABLE-ADVANCED:INTERNAL=1
 //This needs to be in PYTHONPATH when 'setup.py install' is called.
@@ -846,7 +945,7 @@ PYTHON_INSTALL_DIR:INTERNAL=lib/python3/dist-packages
 //Result of TRY_COMPILE
 THREADS_HAVE_PTHREAD_ARG:INTERNAL=TRUE
 //Components requested for this build tree.
-_Boost_COMPONENTS_SEARCHED:INTERNAL=date_time;system
+_Boost_COMPONENTS_SEARCHED:INTERNAL=atomic;chrono;date_time;system;thread
 //Last used Boost_INCLUDE_DIR value.
 _Boost_INCLUDE_DIR_LAST:INTERNAL=/usr/include
 //Last used Boost_LIBRARY_DIR_DEBUG value.
@@ -859,6 +958,8 @@ _Boost_NAMESPACE_LAST:INTERNAL=boost
 _Boost_USE_MULTITHREADED_LAST:INTERNAL=TRUE
 //CMAKE_INSTALL_PREFIX during last run
 _GNUInstallDirs_LAST_CMAKE_INSTALL_PREFIX:INTERNAL=/home/sdpo-ratf/OmniCar_Control/[02]Code/omnicar_ros_ws/install
+__pkg_config_arguments_BFL:INTERNAL=REQUIRED;orocos-bfl
+__pkg_config_checked_BFL:INTERNAL=1
 //ADVANCED property for variable: gmock_build_tests
 gmock_build_tests-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: gtest_build_samples
@@ -871,4 +972,7 @@ gtest_disable_pthreads-ADVANCED:INTERNAL=1
 gtest_force_shared_crt-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: gtest_hide_internal_symbols
 gtest_hide_internal_symbols-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: pkgcfg_lib_BFL_orocos-bfl
+pkgcfg_lib_BFL_orocos-bfl-ADVANCED:INTERNAL=1
+prefix_result:INTERNAL=/usr/lib
 
