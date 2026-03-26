@@ -1,0 +1,13 @@
+digraph G {
+"unnamed_robot/odom" -> "unnamed_robot/base_footprint"[label="Broadcaster: /unnamed_robot/sdpo_ros_odom\nAverage rate: 50.102 Hz\nMost recent transform: 1774451779.179 ( 0.011 sec old)\nBuffer length: 4.910 sec\n"];
+"unnamed_robot/map" -> "unnamed_robot/odom"[label="Broadcaster: /unnamed_robot/sdpo_ratf_ros_localization\nAverage rate: 50.103 Hz\nMost recent transform: 1774451779.179 ( 0.011 sec old)\nBuffer length: 4.930 sec\n"];
+"base_link" -> "base_laser"[label="Broadcaster: /base_to_laser\nAverage rate: 20.007 Hz\nMost recent transform: 1774451779.230 ( -0.040 sec old)\nBuffer length: 4.898 sec\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1774451779.190"[ shape=plaintext ] ;
+ }->"base_link";
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1774451779.190"[ shape=plaintext ] ;
+ }->"unnamed_robot/map";
+}

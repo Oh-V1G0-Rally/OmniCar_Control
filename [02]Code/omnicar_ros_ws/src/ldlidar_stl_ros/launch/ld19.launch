@@ -13,6 +13,7 @@
   <param name="frame_id" value="$(arg frame_id)"/>
   <param name="port_name" value ="$(arg port_name)"/>
   <param name="port_baudrate" value ="$(arg port_baudrate)"/>
+  <rosparam command="load" file="$(find ldlidar_stl_ros)/config/sdpo_driver_laser_2d_LD19.yaml" />
   <!-- Set laser scan directon: -->
   <!--    1. Set counterclockwise, example: <param name="laser_scan_dir" type="bool" value="true"/> -->
   <!--    2. Set clockwise,        example: <param name="laser_scan_dir" type="bool" value="false"/> -->

@@ -1,7 +1,7 @@
-map_frame_id: $(arg robot_id)/map
-odom_frame_id: $(arg robot_id)/odom
-base_frame_id: $(arg robot_id)/base_footprint
-laser_frame_id: $(arg robot_id)/laser
+map_frame_id: map
+odom_frame_id: odom
+base_frame_id: base_link        
+laser_frame_id: base_laser
 
 beacons_diam: 0.09
 beacons_valid_dist: 0.20

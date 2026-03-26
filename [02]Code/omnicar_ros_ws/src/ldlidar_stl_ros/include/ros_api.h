@@ -24,6 +24,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/LaserScan.h>
 #include <string>
+#include <tf/transform_broadcaster.h>
 
 struct LaserScanSetting
 {

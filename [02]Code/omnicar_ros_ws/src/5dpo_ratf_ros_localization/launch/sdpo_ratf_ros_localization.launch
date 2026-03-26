@@ -7,6 +7,9 @@
         clear_params="true" output="$(optenv ROBOT_OUTPUT screen)">
       <rosparam command="load" subst_value="True"
           file="$(find sdpo_ratf_ros_localization)/config/sdpo_ratf_ros_localization.yaml"/>
+          
+          <remap from="scan" to="/scan" />
+          <remap from="odom" to="/odom" />
     </node>
   </group>
 </launch>
