@@ -44,7 +44,8 @@ int main(int argc, char  **argv)
   ros::NodeHandle n("~");
   std::string topic_name;
 
-  n.param("topic_name", topic_name, std::string("scan"));
+  nh.param<std::string>("topic_name", topic_name, "scan");	
+  //n.param("topic_name", topic_name, std::string("scan"));
 
   if (topic_name.empty()) {
     ROS_ERROR("[ldrobot] [ldldiar_listen_node] input param <topic_name> is null");
@@ -53,6 +54,7 @@ int main(int argc, char  **argv)
     ROS_INFO("[ldrobot] [ldldiar_listen_node] input param <topic_name> is %s", topic_name.c_str());
   }
   
+  ros::Subscriber sub = nh.subscribe(topic_name, 10,  &LidarMsgCallback);
   ros::Subscriber msg_subs = nh.subscribe(topic_name, 10, &LidarMsgCallback);
   ROS_INFO("[ldrobot] start ldldiar message subscribe node");
 

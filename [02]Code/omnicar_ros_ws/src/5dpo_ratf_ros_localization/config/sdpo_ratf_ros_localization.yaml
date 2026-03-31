@@ -1,14 +1,14 @@
-map_frame_id: map
-odom_frame_id: odom
-base_frame_id: base_link        
-laser_frame_id: base_laser
+map_frame_id: "map"
+odom_frame_id: "odom"
+base_frame_id: "base_footprint"      
+laser_frame_id: "laser"
 
-beacons_diam: 0.09
-beacons_valid_dist: 0.20
-beacons: [ 0.898, 0.552,
-          -0.898, 0.552,
-           0.898,-0.552,
-          -0.898,-0.552 ]
+beacons_diam: 0.1
+beacons_valid_dist: 0.2
+beacons: [ 0.910, 0.552,
+          -0.910, 0.552,
+           0.910,-0.552,
+          -0.910,-0.552 ]
 
 ekf_pose_ini_x: 0
 ekf_pose_ini_y: 0
